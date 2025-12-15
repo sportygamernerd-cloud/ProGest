@@ -218,7 +218,8 @@
         <div class="relative z-10 w-full max-w-md flex flex-col items-center text-center animate-fade-in">
             <div
                 class="w-24 h-24 bg-gradient-to-br from-brand-500 to-brand-700 rounded-3xl flex items-center justify-center text-white text-5xl mb-8 shadow-2xl shadow-brand-500/40">
-                <i class="fa-solid fa-cloud"></i></div>
+                <i class="fa-solid fa-cloud"></i>
+            </div>
             <h1 class="text-4xl font-black mb-2 text-slate-900 dark:text-white tracking-tight">ProGest Cloud</h1>
             <p class="text-slate-500 dark:text-slate-400 mb-10 text-lg">L'outil de gestion ultime pour les artisans.</p>
 
@@ -248,7 +249,8 @@
             <div class="flex items-center gap-3 mb-4">
                 <div
                     class="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center text-white shadow-lg">
-                    <i class="fa-solid fa-cloud"></i></div>
+                    <i class="fa-solid fa-cloud"></i>
+                </div>
                 <div><span class="font-black text-xl tracking-tight gradient-text">ProGest</span>
                     <div class="flex items-center gap-2 mt-0.5"><span id="badge-status-desktop"
                             class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1"><span
@@ -460,7 +462,8 @@
                         class="w-full bg-slate-900/90 text-white py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-transparent transition-colors"><i
                             class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> <span
                             class="font-bold">Assistant IA</span> <span class="text-xs opacity-70 font-normal">-
-                            Gratuit</span></button></div>
+                            Gratuit</span></button>
+                </div>
                 <div>
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="font-bold text-sm uppercase text-slate-500">Prestations</h3><button
@@ -477,7 +480,8 @@
                         <div class="flex justify-between text-sm text-slate-400 mb-2"><span>Total HT</span><span
                                 id="editor-total-ht">0.00 €</span></div>
                         <div class="flex justify-between text-sm text-slate-400 mb-4 border-b border-slate-700 pb-4">
-                            <span>TVA</span><span id="editor-total-tva">0.00 €</span></div>
+                            <span>TVA</span><span id="editor-total-tva">0.00 €</span>
+                        </div>
                         <div class="flex justify-between text-3xl font-black"><span>Net</span><span
                                 id="editor-total-ttc" class="text-brand-400">0.00 €</span></div>
                     </div>
@@ -671,14 +675,16 @@
             class="p-2 -mt-10">
             <div
                 class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-brand-500/40 hover:scale-110 transition-all">
-                <i class="fa-solid fa-plus text-2xl"></i></div>
+                <i class="fa-solid fa-plus text-2xl"></i>
+            </div>
         </button><button onclick="router.navigate('clients')"
             class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="clients"><i
                 class="fa-solid fa-users mb-1 text-lg"></i><span
                 class="text-[10px] font-bold">Clients</span></button><button onclick="router.navigate('settings')"
             class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all"
             data-target="settings"><i class="fa-solid fa-cog mb-1 text-lg"></i><span
-                class="text-[10px] font-bold">Réglages</span></button></div>
+                class="text-[10px] font-bold">Réglages</span></button>
+    </div>
 
     <!-- MODALS -->
 
@@ -768,7 +774,8 @@
                             id="print-tva"></span></div>
                     <div
                         class="flex justify-between text-2xl font-black text-slate-900 border-t-2 border-slate-900 pt-2 mt-2">
-                        <span>NET À PAYER</span><span id="print-ttc"></span></div>
+                        <span>NET À PAYER</span><span id="print-ttc"></span>
+                    </div>
                 </div>
             </div>
 
@@ -893,32 +900,53 @@
                 }
             },
             loginDemo: () => {
-                // Mock user for demo
-                const demoUser = {
-                    uid: 'demo_' + Date.now(),
-                    displayName: 'Utilisateur Démo',
-                    email: 'demo@progest.com',
-                    photoURL: 'https://ui-avatars.com/api/?name=Demo&background=random'
-                };
+                try {
+                    console.log("Starting Demo Mode...");
+                    // Mock user for demo
+                    const demoUser = {
+                        uid: 'demo_' + Date.now(),
+                        displayName: 'Utilisateur Démo',
+                        email: 'demo@progest.com',
+                        photoURL: 'https://ui-avatars.com/api/?name=Demo&background=random'
+                    };
 
-                DataService.userId = demoUser.uid;
+                    DataService.userId = demoUser.uid;
 
-                // Update UI
-                document.getElementById('user-name').innerText = demoUser.displayName;
-                document.getElementById('user-photo').src = demoUser.photoURL;
-                document.getElementById('dash-name').innerText = 'Démo';
-                document.getElementById('settings-email').innerText = demoUser.email;
-                document.getElementById('set-username').value = demoUser.displayName;
+                    // Update UI
+                    document.getElementById('user-name').innerText = demoUser.displayName;
+                    document.getElementById('user-photo').src = demoUser.photoURL;
+                    document.getElementById('dash-name').innerText = 'Démo';
+                    document.getElementById('settings-email').innerText = demoUser.email;
+                    document.getElementById('set-username').value = demoUser.displayName;
 
-                // Initialize Signature for Demo Mode
-                window.signatureManager.init();
+                    // Mock Subscription
+                    window.subscriptionManager = { checkLimit: async () => true, checkForSuccess: () => { } };
 
-                // Switch Views
-                document.getElementById('view-login').classList.remove('active');
-                document.getElementById('view-login').classList.add('hidden');
-                router.navigate('home');
+                    // Initialize Signature for Demo Mode
+                    if (window.signatureManager) {
+                        window.signatureManager.init();
+                    } else {
+                        console.error("SignatureManager not found");
+                    }
 
-                alert("Vous êtes en mode DÉMO. Les données sont enregistrées localement dans votre navigateur.");
+                    // Switch Views
+                    const loginView = document.getElementById('view-login');
+                    if (loginView) {
+                        loginView.classList.remove('active');
+                        loginView.classList.add('hidden');
+                    }
+
+                    if (window.router) {
+                        window.router.navigate('home');
+                    } else {
+                        alert("Erreur: Router non initialisé");
+                    }
+
+                    alert("Vous êtes en mode DÉMO. Les données sont enregistrées localement dans votre navigateur.");
+                } catch (e) {
+                    console.error("Demo Login Error:", e);
+                    alert("Erreur lors du lancement de la démo: " + e.message);
+                }
             },
             logout: async () => {
                 if (confirm("Déconnexion ?")) {
