@@ -403,9 +403,11 @@
 
         // --- 3. DEALS MANAGER (AFFILIATION) ---
         window.dealsManager = {
-            fakeDeals: [
-                { title: "Makita Pack 18V Perceuse + Visseuse", price: 219, old: 320, link: "#", img: "https://m.media-amazon.com/images/I/81+Xq+g+WXL._AC_SL1500_.jpg", hot:true },
-                { title: "Bosch Pro Disque Diamant (Lot 3)", price: 24, old: 45, link: "#", img: "https://m.media-amazon.com/images/I/71wYg+Q+G+L._AC_SL1500_.jpg", hot:false }
+                         fakeDeals: [
+                { title: "Bosch Professional 103 pièces Jeu de forets et d'embouts", price: 34, old 50, link: "https://amzn.to/3KTfEh0", img: "https://m.media-amazon.com/images/I/811e1lAbH7L._AC_SX569_.jpg", hot:true },
+                { title: "Bosch Professional scie circulaire GKS 190", price: 122 , old: 130, link: "https://amzn.to/3KW1EmQ", img: "https://m.media-amazon.com/images/I/51crVNWfQlL._AC_SX569_.jpg", hot:false },
+                { title: "Makita DDF482Z Perceuse visseuse 60 nm 18 V Bleu", price: 79, old: 117, link: "https://amzn.to/4oR8nwo", img: "https://m.media-amazon.com/images/I/71bmqgnZQdL._AC_SY679_.jpg", hot:true },
+                { title: "Makita DBO180Z Ponceuse Excentrique Ø 125 mm", price: 93, old: 118, link: "https://amzn.to/3MXR6UI", img: "https://m.media-amazon.com/images/I/51txDg7nshL._AC_SX569_.jpg", hot:false }
             ],
             render() {
                 const g = document.getElementById('deals-grid'); if(!g) return;
@@ -490,6 +492,9 @@
                 document.getElementById('settings-email').innerText = demoUser.email;
                 document.getElementById('set-username').value = demoUser.displayName;
                 
+                // Initialize Signature for Demo Mode
+                window.signatureManager.init();
+
                 // Switch Views
                 document.getElementById('view-login').classList.remove('active');
                 document.getElementById('view-login').classList.add('hidden');
@@ -510,6 +515,7 @@
             canvas: null, ctx: null, isDrawing: false, currentSignatureData: null,
             init() {
                 this.canvas = document.getElementById('signature-pad');
+                if (!this.canvas) return;
                 this.ctx = this.canvas.getContext('2d');
                 
                 // Mouse Events
@@ -551,7 +557,12 @@
                 this.ctx.stroke();
             },
             stop() { this.isDrawing = false; },
-            clear() { this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); this.currentSignatureData = null; },
+            clear() { 
+                if (this.ctx) {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); 
+                }
+                this.currentSignatureData = null; 
+            },
             openModal() { 
                 document.getElementById('modal-signature').classList.remove('hidden'); 
                 document.getElementById('modal-signature').classList.add('flex');
