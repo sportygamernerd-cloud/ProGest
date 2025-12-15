@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ProGest Cloud - L'outil des Artisans</title>
+    
+    <!-- SÉCURITÉ CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com;">
+
+    <!-- MOTEUR GRAPHIQUE -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class', 
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { 
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
+                        accent: { orange: '#f97316', green: '#22c55e', red: '#ef4444' }
+                    },
+                    animation: { 
+                        'fade-in': 'fadeIn 0.4s ease-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-soft': 'pulseSoft 3s ease-in-out infinite'
+                    },
+                    keyframes: { 
+                        fadeIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+                        pulseSoft: { '0%, 100%': { opacity: '0.6' }, '50%': { opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .view-section { display: none !important; }
+        .view-section.active { display: block !important; animation: fadeIn 0.4s ease-out forwards; }
+        #view-editor.active, #view-login.active { display: flex !important; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .dark .glass { background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        .btn-action { transition: transform 0.1s; }
+        .btn-action:active { transform: scale(0.95); }
+        
+        .gradient-text { background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-fire { background: linear-gradient(135deg, #f97316 0%, #ef4444 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .promo-badge { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; font-weight: 800; padding: 4px 10px; border-radius: 99px; font-size: 0.7rem; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); z-index: 10; }
+
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; }
+        .dark .calendar-grid { background: #334155; border: 1px solid #334155; }
+        .calendar-day { background: white; min-height: 90px; padding: 6px; display: flex; flex-direction: column; cursor: pointer; transition: background 0.2s; }
+        .dark .calendar-day { background: #1e293b; }
+        .calendar-day:hover { background: #f8fafc; }
+        .dark .calendar-day:hover { background: #334155; }
+
+        @media print { 
+            body { background: white !important; color: black !important; } 
+            .no-print, #sidebar, #mobile-nav, #view-login, .view-section, #signature-pad-container { display: none !important; } 
+            #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; } 
+            .print-page { padding: 0; margin: 0; width: 100%; }
+        }
+        #print-area { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased dark:bg-[#0f172a] dark:text-slate-200 h-screen overflow-hidden flex transition-colors duration-300">
+
+    <!-- 0. LOGIN SCREEN -->
+    <section id="view-login" class="fixed inset-0 z-[100] bg-slate-50 dark:bg-[#0f172a] flex flex-col items-center justify-center p-6 view-section active">
+        <div class="relative z-10 w-full max-w-md flex flex-col items-center text-center animate-fade-in">
+            <div class="w-24 h-24 bg-gradient-to-br from-brand-500 to-brand-700 rounded-3xl flex items-center justify-center text-white text-5xl mb-8 shadow-2xl shadow-brand-500/40"><i class="fa-solid fa-cloud"></i></div>
+            <h1 class="text-4xl font-black mb-2 text-slate-900 dark:text-white tracking-tight">ProGest Cloud</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-10 text-lg">L'outil de gestion ultime pour les artisans.</p>
+            
+            <!-- BOUTON GOOGLE -->
+            <button onclick="authManager.login()" class="btn-action w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white font-bold py-4 px-6 rounded-2xl shadow-xl flex items-center justify-center gap-4 hover:shadow-2xl mb-4">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6">
+                <span class="text-lg">Connexion Google</span>
+            </button>
+            
+            <!-- BOUTON DEMO (NOUVEAU) -->
+            <button onclick="authManager.loginDemo()" class="btn-action w-full bg-brand-600/10 border border-brand-500/30 text-brand-600 dark:text-brand-400 font-bold py-3 px-6 rounded-2xl flex items-center justify-center gap-2 hover:bg-brand-600/20">
+                <i class="fa-solid fa-gamepad"></i>
+                <span>Accès Démo (Sans Compte)</span>
+            </button>
+            
+            <div id="login-error" class="text-red-500 text-xs mt-4 hidden bg-red-100 p-2 rounded-lg"></div>
+            <p class="text-[10px] text-slate-400 mt-8 uppercase tracking-widest">Sécurisé par Firebase Google</p>
+        </div>
+    </section>
+
+    <!-- SIDEBAR (Desktop) -->
+    <aside id="sidebar" class="hidden md:flex flex-col w-72 glass border-r border-slate-200/50 dark:border-slate-700/50 h-full z-20">
+        <div class="p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-cloud"></i></div>
+                <div><span class="font-black text-xl tracking-tight gradient-text">ProGest</span><div class="flex items-center gap-2 mt-0.5"><span id="badge-status-desktop" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full status-dot"></span> GRATUIT</span></div></div>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl">
+                <img id="user-photo" src="" class="w-10 h-10 rounded-full bg-slate-200">
+                <div class="flex-1 overflow-hidden"><div id="user-name" class="text-sm font-bold truncate dark:text-white">...</div><button onclick="authManager.logout()" class="text-[11px] text-red-500 hover:underline">Déconnexion</button></div>
+            </div>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
+            <button onclick="router.navigate('home')" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold rounded-xl transition-all hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 nav-btn" data-target="home"><i class="fa-solid fa-chart-pie w-5 text-center"></i> Tableau de bord</button>
+            <button onclick="router.navigate('calendar')" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold rounded-xl transition-all hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 nav-btn" data-target="calendar"><i class="fa-solid fa-calendar-alt w-5 text-center"></i> Agenda</button>
+            <button onclick="router.navigate('deals')" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold rounded-xl transition-all bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 hover:bg-red-100 nav-btn" data-target="deals"><i class="fa-solid fa-fire w-5 text-center"></i> Bons Plans</button>
+            <button onclick="router.navigate('editor')" class="w-full flex items-center gap-3 px-4 py-4 text-sm font-bold rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-lg hover:shadow-brand-500/50 transition-all btn-action mt-4 mb-4"><i class="fa-solid fa-plus w-5 text-center text-lg"></i> Nouveau Devis</button>
+            <button onclick="router.navigate('clients')" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold rounded-xl transition-all hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 nav-btn" data-target="clients"><i class="fa-solid fa-users w-5 text-center"></i> Clients</button>
+            <button onclick="router.navigate('items')" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold rounded-xl transition-all hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 nav-btn" data-target="items"><i class="fa-solid fa-boxes-stacked w-5 text-center"></i> Bibliothèque</button>
+        </nav>
+        <div class="p-4 border-t border-slate-200/50 dark:border-slate-700/50">
+            <button onclick="router.navigate('settings')" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-cog text-slate-500"></i> <span class="text-sm font-bold dark:text-white">Paramètres</span></button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 overflow-y-auto custom-scrollbar relative w-full pb-24 md:pb-0">
+        <!-- Mobile Header -->
+        <div class="md:hidden flex items-center justify-between p-4 glass sticky top-0 z-30 border-b border-slate-200/50 dark:border-slate-700/50">
+            <div class="font-bold text-lg dark:text-white flex items-center gap-2"><div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white"><i class="fa-solid fa-cloud"></i></div> <span class="gradient-text">ProGest</span></div>
+            <div class="flex gap-2">
+                <button onclick="router.navigate('deals')" class="w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold"><i class="fa-solid fa-fire"></i></button>
+                <span id="badge-status-mobile" class="text-[10px] font-bold bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full text-green-700 dark:text-green-400 flex items-center gap-1">ONLINE</span>
+            </div>
+        </div>
+
+        <!-- VIEWS -->
+        <!-- 1. HOME -->
+        <section id="view-home" class="view-section hidden p-4 md:p-8 max-w-6xl mx-auto">
+            <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div><h1 class="text-3xl md:text-4xl font-black dark:text-white mb-2">Bonjour, <span id="dash-name" class="gradient-text">Chef</span> 👋</h1><p class="text-slate-500 dark:text-slate-400 text-base flex items-center gap-2">Tout est gratuit pour vous.</p></div>
+                <button onclick="themeManager.toggle()" class="w-10 h-10 rounded-full glass flex items-center justify-center text-slate-500"><i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i></button>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="glass p-5 rounded-2xl shadow-sm card-hover border border-slate-200 dark:border-slate-700"><div class="text-xs font-bold text-slate-400 uppercase mb-2">Chiffre d'Affaires</div><div class="text-2xl font-black text-slate-900 dark:text-white" id="stat-revenue">-- €</div></div>
+                <div class="glass p-5 rounded-2xl shadow-sm card-hover border border-slate-200 dark:border-slate-700"><div class="text-xs font-bold text-slate-400 uppercase mb-2">Devis Signés</div><div class="text-2xl font-black text-slate-900 dark:text-white" id="stat-signed">--</div></div>
+                <div class="glass p-5 rounded-2xl shadow-sm card-hover border border-slate-200 dark:border-slate-700 cursor-pointer" onclick="router.navigate('sites')"><div class="text-xs font-bold text-slate-400 uppercase mb-2">Chantiers Actifs</div><div class="text-2xl font-black text-brand-600">3</div></div>
+                <div class="bg-gradient-to-br from-brand-500 to-brand-700 p-5 rounded-2xl shadow-lg text-white cursor-pointer card-hover btn-action" onclick="router.navigate('editor')"><div class="text-xs font-bold text-brand-100 uppercase mb-2">Action Rapide</div><div class="text-lg font-black flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i> Créer Devis</div></div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-4 mb-8">
+                <!-- BONS PLANS CARD HOME -->
+                <div class="flex-1 p-6 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 text-white shadow-xl flex justify-between items-center cursor-pointer card-hover" onclick="router.navigate('deals')">
+                    <div>
+                        <h3 class="font-bold text-xl mb-1 flex items-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> Bons Plans</h3>
+                        <p class="text-sm text-slate-400">Économisez sur vos outils.</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500"></i>
+                </div>
+                <!-- EXPORT COMPTABLE CARD -->
+                <div class="flex-1 p-6 rounded-2xl bg-gradient-to-r from-green-600 to-green-800 text-white shadow-xl flex justify-between items-center cursor-pointer card-hover" onclick="dashboard.exportAccounting()">
+                    <div>
+                        <h3 class="font-bold text-xl mb-1 flex items-center gap-2"><i class="fa-solid fa-file-excel"></i> Export Comptable</h3>
+                        <p class="text-sm text-green-100">Télécharger tout en CSV.</p>
+                    </div>
+                    <i class="fa-solid fa-download text-green-200"></i>
+                </div>
+            </div>
+
+            <div class="glass rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden"><div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between"><h3 class="font-bold dark:text-white">Derniers Documents</h3><button onclick="router.navigate('editor')" class="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-lg">Nouveau</button></div><ul id="dash-recent-list" class="divide-y divide-slate-200 dark:divide-slate-700"></ul></div>
+        </section>
+
+        <!-- 2. DEALS -->
+        <section id="view-deals" class="view-section hidden p-4 md:p-8 max-w-6xl mx-auto">
+            <div class="mb-8"><h1 class="text-3xl font-black dark:text-white mb-2 flex items-center gap-2">Bons Plans <span class="gradient-fire">Pro</span> <i class="fa-solid fa-fire text-red-500 animate-pulse"></i></h1><p class="text-slate-500 text-sm">Les meilleures offres outillage du web.</p></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="deals-grid"></div>
+        </section>
+
+        <!-- 3. EDITOR -->
+        <section id="view-editor" class="view-section hidden p-0 h-full flex flex-col max-w-5xl mx-auto glass md:shadow-2xl md:my-6 md:rounded-3xl md:h-[calc(100vh-3rem)] overflow-hidden border border-slate-200 dark:border-slate-700">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center glass z-20">
+                <button onclick="router.navigate('home')" class="text-slate-500 font-bold text-sm"><i class="fa-solid fa-arrow-left mr-1"></i> Retour</button>
+                <div class="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1"><button id="btn-type-devis" onclick="editorManager.setType('devis')" class="px-4 py-1.5 rounded-lg text-xs font-bold">DEVIS</button><button id="btn-type-facture" onclick="editorManager.setType('facture')" class="px-4 py-1.5 rounded-lg text-xs font-bold">FACTURE</button></div>
+                <div class="flex gap-2">
+                    <button onclick="editorManager.print()" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"><i class="fa-solid fa-print"></i></button>
+                    <!-- BOUTON SIGNER -->
+                    <button onclick="signatureManager.openModal()" class="btn-action bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg flex items-center gap-2"><i class="fa-solid fa-signature"></i> <span class="hidden sm:inline">Signer</span></button>
+                    <!-- BOUTON SAUVEGARDER -->
+                    <button onclick="editorManager.saveDocument()" class="btn-action bg-green-600 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg flex items-center gap-2"><i class="fa-solid fa-save"></i> <span class="hidden sm:inline">Enreg.</span></button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 space-y-6">
+                <!-- INDICATEUR DE SIGNATURE -->
+                <div id="signature-preview-banner" class="hidden bg-green-100 border border-green-300 rounded-xl p-3 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-check-circle text-green-600 text-xl"></i>
+                        <div>
+                            <p class="font-bold text-green-800 text-sm">Document Signé</p>
+                            <p class="text-xs text-green-600">Prêt à être envoyé</p>
+                        </div>
+                    </div>
+                    <img id="signature-preview-img" src="" class="h-8 border bg-white rounded">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass border border-slate-200 dark:border-slate-700 p-5 rounded-2xl cursor-pointer hover:border-brand-400 transition-colors" onclick="clientManager.openAddModal()"><label class="block text-xs font-extrabold text-brand-600 uppercase mb-2">Client</label><div class="flex justify-between"><div id="editor-client-preview" class="font-bold text-lg dark:text-white text-slate-400">Sélectionner...</div><i class="fa-solid fa-chevron-down text-slate-400"></i></div><input type="hidden" id="editor-client-id"></div>
+                    <div class="grid grid-cols-2 gap-4"><div class="glass border border-slate-200 dark:border-slate-700 p-5 rounded-2xl"><label class="block text-xs font-extrabold text-brand-600 uppercase mb-2">Date</label><input type="date" id="editor-date" class="w-full bg-slate-100 dark:bg-slate-800 rounded p-1 font-bold dark:text-white outline-none text-slate-900"></div><div class="glass border border-slate-200 dark:border-slate-700 p-5 rounded-2xl"><label class="block text-xs font-extrabold text-brand-600 uppercase mb-2">Validité</label><select id="editor-validity" class="w-full bg-slate-100 dark:bg-slate-800 rounded p-1 font-bold dark:text-white outline-none text-slate-900"><option value="30">30 Jours</option></select></div></div>
+                </div>
+                <div class="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 to-blue-600 p-1"><button onclick="aiManager.openModal()" class="w-full bg-slate-900/90 text-white py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-transparent transition-colors"><i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> <span class="font-bold">Assistant IA</span> <span class="text-xs opacity-70 font-normal">- Gratuit</span></button></div>
+                <div><div class="flex justify-between items-center mb-3"><h3 class="font-bold text-sm uppercase text-slate-500">Prestations</h3><button onclick="editorManager.openLibraryModal()" class="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded"><i class="fa-solid fa-book-open mr-1"></i> Biblio</button></div><div id="editor-lines" class="space-y-3"></div><button onclick="editorManager.addLine()" class="mt-4 w-full py-4 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl text-slate-500 font-bold text-sm hover:border-brand-400 hover:text-brand-600 transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-plus"></i> Ajouter une ligne</button></div>
+                <div class="flex justify-end"><div class="w-full md:w-1/2 bg-slate-900 text-white rounded-2xl p-6 shadow-xl"><div class="flex justify-between text-sm text-slate-400 mb-2"><span>Total HT</span><span id="editor-total-ht">0.00 €</span></div><div class="flex justify-between text-sm text-slate-400 mb-4 border-b border-slate-700 pb-4"><span>TVA</span><span id="editor-total-tva">0.00 €</span></div><div class="flex justify-between text-3xl font-black"><span>Net</span><span id="editor-total-ttc" class="text-brand-400">0.00 €</span></div></div></div>
+            </div>
+        </section>
+
+        <!-- 4. CALENDAR -->
+        <section id="view-calendar" class="view-section hidden p-4 md:p-8 max-w-6xl mx-auto h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6"><div><h2 class="text-3xl font-black dark:text-white mb-1"><span class="gradient-text">Mon Agenda</span></h2><p class="text-slate-500 dark:text-slate-400 text-base font-bold capitalize" id="calendar-month-display">...</p></div><div class="flex gap-2"><button onclick="calendarManager.changeMonth(-1)" class="w-10 h-10 rounded-xl glass shadow flex items-center justify-center hover:scale-110 border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-chevron-left text-brand-600"></i></button><button onclick="calendarManager.changeMonth(1)" class="w-10 h-10 rounded-xl glass shadow flex items-center justify-center hover:scale-110 border border-slate-200 dark:border-slate-700"><i class="fa-solid fa-chevron-right text-brand-600"></i></button></div></div>
+            <div class="glass rounded-2xl shadow-xl border border-slate-200/50 dark:border-slate-700/50 overflow-hidden flex-1 flex flex-col">
+                <div class="grid grid-cols-7 border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800/50"><div class="py-3 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Lun</div><div class="py-3 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Mar</div><div class="py-3 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Mer</div><div class="py-3 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Jeu</div><div class="py-3 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ven</div><div class="py-3 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Sam</div><div class="py-3 text-center text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Dim</div></div>
+                <div id="calendar-grid" class="calendar-grid flex-1 overflow-y-auto custom-scrollbar p-2 bg-slate-50 dark:bg-slate-900/30"></div>
+            </div>
+        </section>
+
+        <!-- 5. CLIENTS -->
+        <section id="view-clients" class="view-section hidden p-4 md:p-8 max-w-6xl mx-auto"><h2 class="text-3xl font-black dark:text-white mb-6">Clients</h2><div id="clients-list-body" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div><button onclick="clientManager.openAddModal()" class="fixed bottom-24 right-6 w-16 h-16 bg-brand-600 text-white rounded-2xl shadow-2xl flex items-center justify-center text-2xl btn-action"><i class="fa-solid fa-plus"></i></button></section>
+        
+        <!-- 6. ITEMS -->
+        <section id="view-items" class="view-section hidden p-4 md:p-8 max-w-6xl mx-auto"><h2 class="text-3xl font-black dark:text-white mb-6">Bibliothèque</h2><div id="items-list-body" class="space-y-3"></div><button onclick="itemManager.openAddModal()" class="fixed bottom-24 right-6 w-16 h-16 bg-brand-600 text-white rounded-2xl shadow-2xl flex items-center justify-center text-2xl btn-action"><i class="fa-solid fa-plus"></i></button></section>
+        
+        <!-- 7. SETTINGS -->
+        <section id="view-settings" class="view-section hidden p-4 md:p-8 max-w-3xl mx-auto">
+            <h2 class="text-3xl font-black dark:text-white mb-6">Paramètres & Mentions Légales</h2>
+            <form onsubmit="settingsManager.save(event)" class="glass p-8 rounded-2xl shadow-lg space-y-6">
+                <!-- LOGO UPLOAD -->
+                <div>
+                    <label class="font-bold text-sm block mb-2 dark:text-white">Logo de l'entreprise</label>
+                    <div class="flex items-center gap-4">
+                        <div id="preview-logo" class="w-24 h-24 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center border border-slate-200 overflow-hidden">
+                            <i class="fa-solid fa-image text-slate-400 text-2xl"></i>
+                        </div>
+                        <div>
+                            <input type="file" id="set-logo" class="hidden" accept="image/*" onchange="settingsManager.handleLogo(this)">
+                            <button type="button" onclick="document.getElementById('set-logo').click()" class="bg-brand-100 text-brand-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-200">Choisir une image</button>
+                            <p class="text-xs text-slate-500 mt-1">PNG ou JPG (Max 500ko)</p>
+                        </div>
+                    </div>
+                </div>
+                <div><label class="font-bold text-sm block mb-2 dark:text-white">Nom Entreprise</label><input id="set-company" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-slate-900 dark:text-white"></div>
+                <div><label class="font-bold text-sm block mb-2 dark:text-white">SIRET</label><input id="set-siret" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-slate-900 dark:text-white"></div>
+                <div><label class="font-bold text-sm block mb-2 dark:text-white">Adresse</label><textarea id="set-address" rows="2" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-slate-900 dark:text-white"></textarea></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="font-bold text-sm block mb-2 dark:text-white text-brand-600">N° Assurance Décennale</label><input id="set-decennale" placeholder="Obligatoire" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-slate-900 dark:text-white"></div>
+                    <div><label class="font-bold text-sm block mb-2 dark:text-white text-brand-600">Label RGE (Optionnel)</label><input id="set-rge" placeholder="Qualibat / EcoArtisan" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-slate-900 dark:text-white"></div>
+                </div>
+                <!-- TVA Intracommunautaire -->
+                <div><label class="font-bold text-sm block mb-2 dark:text-white">N° TVA Intracommunautaire</label><input id="set-tva-intra" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-slate-900 dark:text-white"></div>
+
+                <button class="w-full py-4 bg-brand-600 text-white font-bold rounded-xl btn-action">Enregistrer les mentions</button>
+            </form>
+            
+            <!-- SECTION PROFIL -->
+            <div class="glass p-8 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 mt-8">
+                <h3 class="font-bold text-lg mb-4 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-circle text-brand-600"></i> Mon Profil</h3>
+                <div class="flex items-center gap-4 mb-6">
+                    <img id="settings-photo" src="" class="w-16 h-16 rounded-full bg-slate-200 object-cover">
+                    <div><p class="text-sm text-slate-500">Connecté en tant que</p><p id="settings-email" class="font-bold dark:text-white">...</p></div>
+                </div>
+                <div class="space-y-4">
+                     <div><label class="font-bold text-sm block mb-2 dark:text-white">Nom d'affichage</label><input id="set-username" class="w-full p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 outline-none text-slate-900 dark:text-white"></div>
+                    <button type="button" onclick="settingsManager.updateProfile()" class="w-full py-3 bg-brand-100 text-brand-700 font-bold rounded-xl hover:bg-brand-200 transition-colors">Mettre à jour le profil</button>
+                    <button type="button" onclick="authManager.logout()" class="w-full py-3 border-2 border-red-100 text-red-500 font-bold rounded-xl hover:bg-red-50 transition-colors">Se déconnecter</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. SUIVI CHANTIER -->
+        <section id="view-sites" class="view-section hidden p-4 md:p-8 max-w-6xl mx-auto"><div class="mb-8 flex justify-between items-center"><div><h2 class="text-3xl font-black dark:text-white mb-2"><span class="gradient-text">Suivi de Chantier</span></h2><p class="text-slate-500 dark:text-slate-400">Journal de bord et photos</p></div><button onclick="siteManager.addNote()" class="bg-brand-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg btn-action"><i class="fa-solid fa-camera mr-2"></i> Ajouter Note/Photo</button></div><div id="sites-feed" class="space-y-6"><div class="glass p-6 rounded-2xl border border-slate-200 dark:border-slate-700"><div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">M</div><div><div class="font-bold dark:text-white">Exemple : Chantier Mme. Martin</div><div class="text-xs text-slate-500">Aujourd'hui, 14:30</div></div></div><p class="text-slate-700 dark:text-slate-300 mb-4">Fin de la pose du placo dans le salon. Prévoir ponçage demain matin.</p></div></div></section>
+    </main>
+
+    <!-- MOBILE NAV -->
+    <div id="mobile-nav" class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-slate-200/50 dark:border-slate-700/50 flex justify-around p-3 pb-safe z-40 shadow-2xl"><button onclick="router.navigate('home')" class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="home"><i class="fa-solid fa-house mb-1 text-lg"></i><span class="text-[10px] font-bold">Accueil</span></button><button onclick="router.navigate('sites')" class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="sites"><i class="fa-solid fa-hard-hat mb-1 text-lg"></i><span class="text-[10px] font-bold">Chantier</span></button><button onclick="router.navigate('editor')" class="p-2 -mt-10"><div class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-brand-500/40 hover:scale-110 transition-all"><i class="fa-solid fa-plus text-2xl"></i></div></button><button onclick="router.navigate('clients')" class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="clients"><i class="fa-solid fa-users mb-1 text-lg"></i><span class="text-[10px] font-bold">Clients</span></button><button onclick="router.navigate('settings')" class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="settings"><i class="fa-solid fa-cog mb-1 text-lg"></i><span class="text-[10px] font-bold">Réglages</span></button></div>
+
+    <!-- MODALS -->
+    
+    <!-- MODAL SIGNATURE -->
+    <div id="modal-signature" class="fixed inset-0 z-[100] hidden flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="glass w-full max-w-lg p-6 rounded-3xl animate-slide-up mx-4">
+            <h3 class="font-bold text-xl mb-2 dark:text-white flex items-center gap-2">
+                <i class="fa-solid fa-signature text-brand-600"></i> Signature Client
+            </h3>
+            <p class="text-sm text-slate-500 mb-4">Signez dans le cadre ci-dessous :</p>
+            
+            <div class="bg-white rounded-xl border-2 border-dashed border-slate-300 overflow-hidden touch-none relative" style="height: 250px;">
+                <canvas id="signature-pad" class="w-full h-full cursor-crosshair"></canvas>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button onclick="signatureManager.clear()" class="flex-1 py-3 text-red-500 font-bold bg-red-50 rounded-xl hover:bg-red-100 transition-colors">Effacer</button>
+                <button onclick="signatureManager.save()" class="flex-[2] py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 shadow-lg btn-action">Valider la signature</button>
+            </div>
+            <button onclick="signatureManager.close()" class="mt-4 text-xs text-slate-400 w-full text-center hover:text-white">Annuler</button>
+        </div>
+    </div>
+
+    <div id="modal-ai" class="fixed inset-0 z-[100] hidden flex flex-col items-center justify-end sm:justify-center"><div class="fixed inset-0 bg-black/70 backdrop-blur-md" onclick="aiManager.closeModal()"></div><div class="glass w-full sm:max-w-lg p-8 rounded-t-3xl sm:rounded-3xl z-10 animate-slide-up"><h3 class="text-2xl font-black mb-4 dark:text-white flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i> Assistant IA</h3><textarea id="ai-input" rows="4" class="w-full p-4 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 outline-none text-slate-900 dark:text-white" placeholder="Décrivez les travaux..."></textarea><button onclick="aiManager.generate()" id="ai-btn-generate" class="w-full py-4 bg-purple-600 text-white font-bold rounded-xl btn-action">Générer</button></div></div>
+    <div id="modal-generic" class="fixed inset-0 z-[60] hidden flex flex-col items-center justify-end sm:justify-center"></div>
+    
+    <!-- PRINT TEMPLATE -->
+    <div id="print-area">
+        <div class="print-page font-sans p-10 max-w-[210mm] mx-auto bg-white text-slate-900 h-full relative">
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-10 pb-6 border-b-2 border-slate-900">
+                <div class="w-1/2">
+                    <img id="print-logo" class="h-20 object-contain mb-4 hidden" src="">
+                    <div id="print-company-info" class="text-sm text-slate-600 whitespace-pre-line"></div>
+                </div>
+                <div class="text-right w-1/2">
+                    <h1 class="text-5xl font-black uppercase tracking-tighter mb-2" id="print-type">DEVIS</h1>
+                    <p class="text-lg font-bold">N° <span id="print-ref"></span></p>
+                    <p class="text-sm text-slate-500">Date : <span id="print-date"></span></p>
+                </div>
+            </div>
+            
+            <!-- Client -->
+            <div class="mb-12 bg-slate-50 p-6 rounded-xl border border-slate-100">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Facturé à</p>
+                <h3 class="font-bold text-2xl mb-1" id="print-client-name"></h3>
+            </div>
+            
+            <!-- Lines -->
+            <table class="w-full mb-8">
+                <thead class="bg-slate-900 text-white">
+                    <tr>
+                        <th class="py-3 px-4 text-left text-xs font-bold uppercase rounded-l-lg">Description</th>
+                        <th class="py-3 px-4 text-center text-xs font-bold uppercase w-16">Qté</th>
+                        <th class="py-3 px-4 text-center text-xs font-bold uppercase w-16">TVA</th>
+                        <th class="py-3 px-4 text-right text-xs font-bold uppercase w-24">Prix U.</th>
+                        <th class="py-3 px-4 text-right text-xs font-bold uppercase w-24 rounded-r-lg">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="print-lines" class="text-sm"></tbody>
+            </table>
+            
+            <!-- Totals -->
+            <div class="flex justify-end mb-10">
+                <div class="w-1/2 space-y-2">
+                    <div class="flex justify-between text-slate-600"><span>Total HT</span><span class="font-bold" id="print-ht"></span></div>
+                    <div class="flex justify-between text-slate-600"><span>Total TVA</span><span class="font-bold" id="print-tva"></span></div>
+                    <div class="flex justify-between text-2xl font-black text-slate-900 border-t-2 border-slate-900 pt-2 mt-2"><span>NET À PAYER</span><span id="print-ttc"></span></div>
+                </div>
+            </div>
+
+            <!-- Signature Area Print -->
+            <div class="flex justify-between mt-10 mb-20">
+                <div class="w-1/3 border-t border-slate-300 pt-2">
+                    <p class="text-xs font-bold uppercase text-slate-400">Pour l'entreprise</p>
+                </div>
+                <div class="w-1/3 border-t border-slate-300 pt-2 relative">
+                    <p class="text-xs font-bold uppercase text-slate-400">Bon pour accord (Client)</p>
+                    <img id="print-signature-img" class="absolute top-4 left-0 w-full h-auto mix-blend-multiply hidden" src="">
+                    <p id="print-signature-date" class="text-[10px] text-slate-400 mt-20 hidden">Signé numériquement le...</p>
+                </div>
+            </div>
+            
+            <!-- Footer Legal -->
+            <div class="absolute bottom-10 left-10 right-10 text-center border-t pt-4 text-[10px] text-slate-400">
+                <p id="print-legal-footer"></p>
+                <p class="mt-1">Document généré par ProGest</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script type="module">
+        // --- 1. CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDa8VDfEQfxX2oFLdU3H1QvD-DACE_K4vM",
+            authDomain: "progest-fd919.firebaseapp.com",
+            projectId: "progest-fd919",
+            storageBucket: "progest-fd919.firebasestorage.app",
+            messagingSenderId: "53031338024",
+            appId: "1:53031338024:web:96b22e10dbb856d54b751d"
+        };
+
+        // --- 2. IMPORTS ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        let db, auth;
+        try { 
+            const app = initializeApp(firebaseConfig); 
+            db = getFirestore(app); 
+            auth = getAuth(app); 
+            console.log("✅ Firebase Initialisé");
+        } catch(e) { console.error("Erreur Firebase:", e); }
+
+        // --- 3. DEALS MANAGER (AFFILIATION) ---
+        window.dealsManager = {
+            fakeDeals: [
+                { title: "Makita Pack 18V Perceuse + Visseuse", price: 219, old: 320, link: "#", img: "https://m.media-amazon.com/images/I/81+Xq+g+WXL._AC_SL1500_.jpg", hot:true },
+                { title: "Bosch Pro Disque Diamant (Lot 3)", price: 24, old: 45, link: "#", img: "https://m.media-amazon.com/images/I/71wYg+Q+G+L._AC_SL1500_.jpg", hot:false }
+            ],
+            render() {
+                const g = document.getElementById('deals-grid'); if(!g) return;
+                g.innerHTML='';
+                this.fakeDeals.forEach(d => {
+                    const discount = Math.round(((d.old-d.price)/d.old)*100);
+                    const fire = d.hot ? '<i class="fa-solid fa-fire text-orange-500 animate-pulse absolute top-3 left-3 text-lg bg-white rounded-full p-1 shadow"></i>' : '';
+                    g.innerHTML += `
+                    <div class="glass rounded-2xl overflow-hidden shadow-lg card-hover relative group">
+                        ${fire} <span class="promo-badge">-${discount}%</span>
+                        <div class="h-48 bg-white flex items-center justify-center p-4 relative">
+                            <img src="${d.img}" class="h-full object-contain group-hover:scale-110 transition-transform duration-500">
+                        </div>
+                        <div class="p-5">
+                            <h3 class="font-bold text-slate-900 dark:text-white mb-2 leading-tight h-10 overflow-hidden">${d.title}</h3>
+                            <div class="flex items-end gap-2 mb-4"><span class="text-2xl font-black text-red-500">${d.price}€</span><span class="text-sm text-slate-400 line-through mb-1">${d.old}€</span></div>
+                            <a href="${d.link}" target="_blank" class="block w-full py-3 bg-slate-900 dark:bg-brand-600 text-white font-bold text-center rounded-xl hover:bg-slate-700 transition-colors btn-action">Voir l'offre</a>
+                        </div>
+                    </div>`;
+                });
+            }
+        };
+
+        // --- 4. DATA SERVICE ---
+        const DataService = {
+            userId: null, isPremium: true,
+            _getLocal(k) { return JSON.parse(localStorage.getItem('pg_'+k)||'[]'); },
+            _saveLocal(k,v) { localStorage.setItem('pg_'+k, JSON.stringify(v)); },
+            async get(c) {
+                if(db && this.userId && !this.userId.startsWith('demo_')) { try { const s=await getDocs(query(collection(db,c),where("uid","==",this.userId))); this._online(true); return s.docs.map(d=>({id:d.id,...d.data()})); } catch { this._online(false); } }
+                return this._getLocal(c);
+            },
+            async add(c,d) {
+                d.uid=this.userId||'guest'; d.created_at=new Date().toISOString();
+                if(db && this.userId && !this.userId.startsWith('demo_')) { try { const r=await addDoc(collection(db,c),d); this._online(true); return {id:r.id,...d}; } catch { this._online(false); } }
+                const i=this._getLocal(c); d.id='loc_'+Date.now(); i.push(d); this._saveLocal(c,i); return d;
+            },
+            async delete(c,id) {
+                if(db && !id.startsWith('loc_') && this.userId && !this.userId.startsWith('demo_')) { try { await deleteDoc(doc(db,c,id)); this._online(true); return; } catch {} }
+                this._saveLocal(c, this._getLocal(c).filter(x=>x.id!==id));
+            },
+            async saveSettings(d) { this._saveLocal('settings',[d]); if(db && this.userId && !this.userId.startsWith('demo_')) try{await this.add('settings',d);}catch{} },
+            _online(s) { const h = s ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full status-dot"></span> ONLINE' : 'OFFLINE'; document.getElementById('badge-status-desktop').innerHTML=h; document.getElementById('badge-status-mobile').innerHTML=h; }
+        };
+        window.DataService = DataService;
+
+        // --- 5. AUTH MANAGER (UPDATED FOR DEMO) ---
+        window.authManager = {
+            login: async () => {
+                const errorDiv = document.getElementById('login-error');
+                if(!auth) return alert("Erreur: Firebase non initialisé");
+                try { 
+                    errorDiv.classList.add('hidden');
+                    await signInWithPopup(auth, new GoogleAuthProvider()); 
+                } 
+                catch(e) { 
+                    console.error(e);
+                    let msg = "Erreur de connexion.";
+                    if(e.code==='auth/unauthorized-domain') msg = "⚠️ Domaine non autorisé. Ajoutez ce domaine dans Firebase Console > Auth > Settings > Authorized Domains.";
+                    else if(e.code==='auth/popup-closed-by-user') msg = "Connexion annulée par l'utilisateur.";
+                    else msg = e.message;
+                    
+                    errorDiv.innerText = msg;
+                    errorDiv.classList.remove('hidden');
+                }
+            },
+            loginDemo: () => {
+                // Mock user for demo
+                const demoUser = {
+                    uid: 'demo_' + Date.now(),
+                    displayName: 'Utilisateur Démo',
+                    email: 'demo@progest.com',
+                    photoURL: 'https://ui-avatars.com/api/?name=Demo&background=random'
+                };
+                
+                DataService.userId = demoUser.uid;
+                
+                // Update UI
+                document.getElementById('user-name').innerText = demoUser.displayName;
+                document.getElementById('user-photo').src = demoUser.photoURL;
+                document.getElementById('dash-name').innerText = 'Démo';
+                document.getElementById('settings-email').innerText = demoUser.email;
+                document.getElementById('set-username').value = demoUser.displayName;
+                
+                // Switch Views
+                document.getElementById('view-login').classList.remove('active');
+                document.getElementById('view-login').classList.add('hidden');
+                router.navigate('home');
+                
+                alert("Vous êtes en mode DÉMO. Les données sont enregistrées localement dans votre navigateur.");
+            },
+            logout: async () => { 
+                if(confirm("Déconnexion ?")) { 
+                    if(auth && auth.currentUser) await signOut(auth); 
+                    window.location.reload(); 
+                } 
+            }
+        };
+
+        // --- NEW : SIGNATURE MANAGER ---
+        window.signatureManager = {
+            canvas: null, ctx: null, isDrawing: false, currentSignatureData: null,
+            init() {
+                this.canvas = document.getElementById('signature-pad');
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Mouse Events
+                this.canvas.addEventListener('mousedown', (e) => this.start(e));
+                this.canvas.addEventListener('mousemove', (e) => this.draw(e));
+                this.canvas.addEventListener('mouseup', () => this.stop());
+                this.canvas.addEventListener('mouseout', () => this.stop());
+                
+                // Touch Events
+                this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); this.start(e.touches[0]); });
+                this.canvas.addEventListener('touchmove', (e) => { e.preventDefault(); this.draw(e.touches[0]); });
+                this.canvas.addEventListener('touchend', () => this.stop());
+                
+                // Resize for quality
+                this.resizeCanvas();
+            },
+            resizeCanvas() {
+                const parent = this.canvas.parentElement;
+                this.canvas.width = parent.clientWidth;
+                this.canvas.height = parent.clientHeight;
+                this.ctx.lineWidth = 2;
+                this.ctx.lineCap = 'round';
+                this.ctx.strokeStyle = '#000';
+            },
+            getPos(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            },
+            start(e) {
+                this.isDrawing = true;
+                const pos = this.getPos(e);
+                this.ctx.beginPath();
+                this.ctx.moveTo(pos.x, pos.y);
+            },
+            draw(e) {
+                if(!this.isDrawing) return;
+                const pos = this.getPos(e);
+                this.ctx.lineTo(pos.x, pos.y);
+                this.ctx.stroke();
+            },
+            stop() { this.isDrawing = false; },
+            clear() { this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); this.currentSignatureData = null; },
+            openModal() { 
+                document.getElementById('modal-signature').classList.remove('hidden'); 
+                document.getElementById('modal-signature').classList.add('flex');
+                setTimeout(() => this.resizeCanvas(), 50); // Delay for layout
+            },
+            close() { 
+                document.getElementById('modal-signature').classList.add('hidden'); 
+                document.getElementById('modal-signature').classList.remove('flex');
+            },
+            save() {
+                this.currentSignatureData = this.canvas.toDataURL();
+                
+                // Update UI preview
+                const banner = document.getElementById('signature-preview-banner');
+                const img = document.getElementById('signature-preview-img');
+                banner.classList.remove('hidden');
+                img.src = this.currentSignatureData;
+                
+                this.close();
+            }
+        };
+
+        // --- 6. CORE MANAGERS ---
+        window.router = {
+            navigate: (id) => {
+                document.querySelectorAll('.view-section').forEach(e => { if(e.id !== 'view-login') {e.classList.remove('active'); e.classList.add('hidden');} });
+                const t = document.getElementById('view-'+id); 
+                if(t) { t.classList.remove('hidden'); setTimeout(()=>t.classList.add('active'),10); }
+                
+                document.querySelectorAll('.nav-btn, .nav-btn-mobile').forEach(b => { 
+                    b.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600', 'text-slate-400', 'text-red-500'); 
+                    if(b.classList.contains('nav-btn-mobile')) b.classList.add('text-slate-400');
+                    if(b.dataset.target===id) {
+                        if(b.classList.contains('nav-btn')) b.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600');
+                        else b.classList.add(id==='deals'?'text-red-500':'text-brand-600');
+                        b.classList.remove('text-slate-400');
+                    }
+                });
+
+                if(id==='home') window.dashboard.load(); 
+                if(id==='editor') window.editorManager.init(); 
+                if(id==='clients') window.clientManager.render();
+                if(id==='items') window.itemManager.render(); 
+                if(id==='calendar') window.calendarManager.render(); 
+                if(id==='settings') window.settingsManager.load();
+                if(id==='deals') window.dealsManager.render();
+            }
+        };
+
+        window.dashboard = {
+            async load() {
+                const d = await DataService.get('docs');
+                let r=0,s=0;
+                d.forEach(x => { if(x.status==='validated' || x.type==='facture') {r+=x.ttc;s++;} });
+                if(document.getElementById('stat-revenue')) document.getElementById('stat-revenue').innerText = r.toFixed(0)+' €';
+                if(document.getElementById('stat-signed')) document.getElementById('stat-signed').innerText = s;
+                
+                const l = document.getElementById('dash-recent-list');
+                if(l) {
+                    l.innerHTML='';
+                    if(d.length===0) l.innerHTML='<li class="p-6 text-center text-sm text-slate-400 italic">Aucun document</li>';
+                    d.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5).forEach(x => 
+                        l.innerHTML+=`<li class="p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer flex justify-between items-center border-b border-slate-100 dark:border-slate-800"><div class="font-bold dark:text-white">${x.clientName}</div><div class="font-black">${x.ttc.toFixed(2)}€</div></li>`
+                    );
+                }
+            },
+            async exportAccounting() {
+                const docs = await DataService.get('docs');
+                if(docs.length === 0) return alert("Aucune facture à exporter.");
+                
+                let csv = "Date;Type;Numero;Client;HT;TVA;TTC\n";
+                docs.forEach(d => {
+                    const date = new Date(d.date).toLocaleDateString();
+                    const tvaTotal = d.ttc - d.ht;
+                    csv += `${date};${d.type};${d.id.substr(-4)};${d.clientName};${d.ht.toFixed(2)};${tvaTotal.toFixed(2)};${d.ttc.toFixed(2)}\n`;
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "export_comptable_progest.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        };
+
+        window.editorManager = {
+            lines: [], 
+            init() { 
+                this.lines = [{d:'',q:1,p:0,tva:0.2}]; 
+                this.renderLines(); 
+                document.getElementById('editor-date').valueAsDate = new Date(); 
+                this.setType('devis');
+                
+                // Reset signature logic
+                window.signatureManager.clear();
+                document.getElementById('signature-preview-banner').classList.add('hidden');
+                document.getElementById('signature-preview-img').src = '';
+            },
+            setType(t) {
+                if(t==='devis'){
+                    document.getElementById('btn-type-devis').className='px-5 py-2 rounded-lg text-sm font-bold bg-white dark:bg-slate-700 text-brand-600 shadow-sm';
+                    document.getElementById('btn-type-facture').className='px-5 py-2 rounded-lg text-sm font-bold text-slate-500';
+                } else {
+                    document.getElementById('btn-type-facture').className='px-5 py-2 rounded-lg text-sm font-bold bg-white dark:bg-slate-700 text-brand-600 shadow-sm';
+                    document.getElementById('btn-type-devis').className='px-5 py-2 rounded-lg text-sm font-bold text-slate-500';
+                }
+            },
+            renderLines() {
+                const e = document.getElementById('editor-lines');
+                e.innerHTML = '';
+                let ht = 0, tvaTotal = 0;
+                this.lines.forEach((l,i) => {
+                    ht += l.q * l.p;
+                    tvaTotal += (l.q * l.p) * l.tva;
+                    e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2"><button onclick="editorManager.removeLine(${i})" class="text-red-500 px-2"><i class="fa-solid fa-times"></i></button><input class="flex-1 min-w-[150px] bg-transparent outline-none dark:text-white text-slate-900 placeholder-slate-400 font-medium" value="${l.d}" oninput="editorManager.up(${i},'d',this.value)" placeholder="Prestation"><input class="w-14 text-center bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.q}" oninput="editorManager.up(${i},'q',this.value)"><input class="w-20 text-right bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.p}" oninput="editorManager.up(${i},'p',this.value)"><select class="w-16 bg-slate-100 dark:bg-slate-800 rounded p-1 text-xs dark:text-white" onchange="editorManager.up(${i},'tva',this.value)"><option value="0.2" ${l.tva==0.2?'selected':''}>20%</option><option value="0.1" ${l.tva==0.1?'selected':''}>10%</option><option value="0.055" ${l.tva==0.055?'selected':''}>5.5%</option></select></div>`;
+                });
+                document.getElementById('editor-total-ht').innerText = ht.toFixed(2)+'€';
+                document.getElementById('editor-total-tva').innerText = tvaTotal.toFixed(2)+'€';
+                document.getElementById('editor-total-ttc').innerText = (ht+tvaTotal).toFixed(2)+'€';
+            },
+            up(i,k,v) { this.lines[i][k] = k==='d' ? v : parseFloat(v)||0; this.renderLines(); },
+            addLine() { this.lines.push({d:'',q:1,p:0,tva:0.2});this.renderLines();},
+            removeLine(i){if(this.lines.length>1){this.lines.splice(i,1);this.renderLines();}},
+            async saveDocument(){
+                const clientName = document.getElementById('editor-client-preview').innerText;
+                if(clientName === "Sélectionner...") return alert('Veuillez sélectionner un client');
+                
+                const b = document.querySelector('button[onclick="editorManager.saveDocument()"]');
+                const t = b.innerHTML; b.innerHTML = '...'; b.disabled = true;
+                
+                let ht=0, tva=0; 
+                this.lines.forEach(l=>{ ht+=l.q*l.p; tva+=(l.q*l.p)*l.tva; });
+                
+                // Get Signature
+                const sigData = window.signatureManager.currentSignatureData;
+
+                await DataService.add('docs', {
+                    type:'devis', date: new Date().toISOString(),
+                    clientName: clientName, lines: this.lines,
+                    ht, ttc: ht+tva, status: sigData ? 'signed' : 'draft',
+                    signature: sigData
+                });
+                b.innerHTML = t; b.disabled = false;
+                alert('Sauvegardé !'); router.navigate('home');
+            },
+            openLibraryModal() { window.uiManager.openGenericModal('Bibliothèque', '<div id="modal-lib-list">...</div>'); window.itemManager.render(true); },
+            importItem(t,p) { this.lines.push({d:t,q:1,p,tva:0.2}); this.renderLines(); window.uiManager.closeGenericModal(); },
+            
+            // PRINT LOGIC (UPDATED WITH LEGAL, VAT & SIGNATURE)
+            async print() {
+                const client = document.getElementById('editor-client-preview').innerText;
+                if(client === "Sélectionner...") return alert("Choisissez un client");
+                
+                // Get Settings for Logo & Legal
+                const s = await DataService.get('settings');
+                const conf = s[0] || {};
+                
+                document.getElementById('print-client-name').innerText = client;
+                document.getElementById('print-date').innerText = new Date().toLocaleDateString();
+                document.getElementById('print-ref').innerText = 'D-' + Date.now().toString().substr(-4);
+                
+                // Legal Info Header
+                let legal = `${conf.company || 'Mon Entreprise'}\nSIRET: ${conf.siret || 'Non renseigné'}\n${conf.address || ''}\nTVA Intra: ${conf.tvaintra || 'Non renseigné'}`;
+                document.getElementById('print-company-info').innerText = legal;
+                
+                // Legal Footer
+                document.getElementById('print-legal-footer').innerText = `Assurance Décennale: ${conf.decennale || 'Non renseignée'} - Mention RGE: ${conf.rge || 'Non applicable'}`;
+                
+                // LOGO
+                const logoImg = document.getElementById('print-logo');
+                if(conf.logo) {
+                    logoImg.src = conf.logo;
+                    logoImg.classList.remove('hidden');
+                } else {
+                    logoImg.classList.add('hidden');
+                }
+
+                // SIGNATURE IN PRINT
+                const sigData = window.signatureManager.currentSignatureData;
+                const sigImgPrint = document.getElementById('print-signature-img');
+                const sigDatePrint = document.getElementById('print-signature-date');
+                
+                if(sigData) {
+                    sigImgPrint.src = sigData;
+                    sigImgPrint.classList.remove('hidden');
+                    sigDatePrint.innerText = "Signé numériquement le " + new Date().toLocaleDateString();
+                    sigDatePrint.classList.remove('hidden');
+                } else {
+                    sigImgPrint.classList.add('hidden');
+                    sigDatePrint.classList.add('hidden');
+                }
+
+                // Lines
+                const tbody = document.getElementById('print-lines');
+                tbody.innerHTML = '';
+                this.lines.forEach(l => {
+                    const tvaPct = (l.tva * 100).toFixed(1) + '%';
+                    tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="py-3 px-4">${l.d}</td><td class="text-center">${l.q}</td><td class="text-center text-xs text-slate-500">${tvaPct}</td><td class="text-right">${l.p}€</td><td class="text-right font-bold">${(l.q*l.p).toFixed(2)}€</td></tr>`;
+                });
+                
+                document.getElementById('print-ht').innerText = document.getElementById('editor-total-ht').innerText;
+                document.getElementById('print-tva').innerText = document.getElementById('editor-total-tva').innerText;
+                document.getElementById('print-ttc').innerText = document.getElementById('editor-total-ttc').innerText;
+
+                window.print();
+            }
+        };
+        
+        const clientManager={async render(){const e=document.getElementById('clients-list-body');const c=await DataService.get('clients');e.innerHTML='';if(c.length===0)e.innerHTML='<p class="text-slate-400 p-4">Vide</p>';c.forEach(x=>e.innerHTML+=`<div class="glass p-4 rounded-xl shadow border border-slate-200/50 flex justify-between"><span class="font-bold dark:text-white text-slate-900">${x.name}</span><button onclick="clientManager.del('${x.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></div>`);},openAddModal(){const e=document.getElementById('view-editor').classList.contains('active');if(e)this.renderSel();else this.openNewForm();},async renderSel(){const c=await DataService.get('clients');let h='<div class="space-y-2 mb-4 max-h-60 overflow-auto custom-scrollbar">';c.forEach(x=>h+=`<div onclick="clientManager.sel('${x.id}','${x.name}')" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer font-bold text-slate-900 dark:text-white hover:bg-brand-100">${x.name}</div>`);h+='</div><button onclick="uiManager.closeGenericModal();clientManager.openNewForm()" class="text-brand-600 text-sm font-bold">Nouveau Client</button>';uiManager.openGenericModal('Choisir',h);},openNewForm(){uiManager.openGenericModal('Nouveau Client',`<input id="new-c-name" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Nom"><button onclick="clientManager.save(true)" class="w-full bg-brand-600 text-white p-3 rounded-xl font-bold">Ajouter</button>`);},async save(s=false){const n=document.getElementById('new-c-name').value;if(!n)return;const r=await DataService.add('clients',{name:n});if(s)this.sel(r.id,r.name);else{uiManager.closeGenericModal();this.render();}},sel(i,n){document.getElementById('editor-client-preview').innerText=n;document.getElementById('editor-client-preview').classList.add('text-slate-900','dark:text-white');document.getElementById('editor-client-id').value=i;uiManager.closeGenericModal();},async del(i){if(confirm('Supprimer ?')){await DataService.delete('clients',i);this.render();}}};
+        const itemManager={async render(m=false){const i=await DataService.get('items');const e=m?document.getElementById('modal-lib-list'):document.getElementById('items-list-body');e.innerHTML='';i.forEach(x=>{const a=m?`onclick="editorManager.importItem('${x.title}',${x.price})"`:'';e.innerHTML+=`<div ${a} class="glass p-4 rounded-xl mb-2 flex justify-between cursor-pointer border border-slate-200/50 dark:border-slate-700"><span class="dark:text-white text-slate-900 font-bold">${x.title}</span><span class="font-black text-brand-600">${x.price}€</span></div>`;});},openAddModal(){uiManager.openGenericModal('Nouvelle Prestation',`<input id="new-i-t" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Titre"><input id="new-i-p" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Prix"><button onclick="itemManager.save()" class="w-full bg-brand-600 text-white p-3 rounded-xl font-bold">Ajouter</button>`);},async save(){await DataService.add('items',{title:document.getElementById('new-i-t').value,price:parseFloat(document.getElementById('new-i-p').value)});uiManager.closeGenericModal();this.render();}};
+        const calendarManager = { currentDate: new Date(), changeMonth(delta) { this.currentDate.setMonth(this.currentDate.getMonth() + delta); this.render(); }, async render() { const year = this.currentDate.getFullYear(); const month = this.currentDate.getMonth(); const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]; const disp = document.getElementById('calendar-month-display'); if(disp) disp.innerText = `${monthNames[month]} ${year}`; const grid = document.getElementById('calendar-grid'); if(!grid) return; grid.innerHTML = ''; const appts = await DataService.get('appointments'); const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate(); const offset = firstDay === 0 ? 6 : firstDay - 1; for(let i=0; i<offset; i++) grid.innerHTML += `<div class="calendar-day bg-slate-50 dark:bg-slate-800/50 opacity-50"></div>`; const today = new Date(); for(let d=1; d<=daysInMonth; d++) { const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const isToday = (d === today.getDate() && month === today.getMonth() && year === today.getFullYear()); const dayAppts = appts.filter(a => a.date === dateStr); let dots = ''; dayAppts.forEach(a => { let c='bg-brand-500'; if(a.type=='chantier')c='bg-green-500'; if(a.type=='urgence')c='bg-red-500'; dots += `<div class="w-2 h-2 rounded-full ${c} mb-0.5"></div>`; }); grid.innerHTML += `<div onclick="calendarManager.openDayModal('${dateStr}')" class="calendar-day group relative hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors"><span class="text-xs font-bold text-slate-500 dark:text-slate-400">${d}</span><div class="mt-1 flex flex-wrap gap-0.5 content-start">${dots}</div></div>`; } }, async openDayModal(dateStr) { const appts = await DataService.get('appointments'); const clients = await DataService.get('clients'); const dayAppts = appts.filter(a => a.date === dateStr); const niceDate = new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }); let ops = `<option value="">-- Client --</option>`; clients.forEach(c => ops += `<option value="${c.name}">${c.name}</option>`); let list = ''; dayAppts.forEach(a => list += `<li class="flex justify-between items-center glass p-3 mb-2 rounded-xl border border-slate-200 dark:border-slate-700"><div><div class="font-bold text-sm text-slate-900 dark:text-white">${a.title}</div><div class="text-xs text-slate-500">${a.type}</div></div><button onclick="calendarManager.del('${a.id}','${dateStr}')" class="text-red-400"><i class="fa-solid fa-times"></i></button></li>`); if(!list) list = '<p class="text-slate-400 italic text-sm mb-4">Rien de prévu</p>'; const form = `<div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4"><label class="text-[10px] uppercase font-bold text-slate-500 mb-2 block">Ajouter</label><select id="cal-client" class="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 outline-none text-slate-900 dark:text-white" onchange="document.getElementById('cal-title').value = this.value">${ops}</select><input id="cal-title" class="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 outline-none text-slate-900 dark:text-white" placeholder="Ou titre libre..."><div class="flex gap-2"><select id="cal-type" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl outline-none text-slate-900 dark:text-white flex-1"><option value="rdv">RDV</option><option value="chantier">Chantier</option><option value="urgence">Urgence</option></select><button onclick="calendarManager.save('${dateStr}')" class="bg-brand-600 text-white font-bold rounded-xl px-4">OK</button></div></div>`; window.uiManager.openGenericModal(niceDate, `<ul class="mb-2">${list}</ul>${form}`); }, async save(dateStr) { const title = document.getElementById('cal-title').value; const type = document.getElementById('cal-type').value; if(!title) return; await DataService.add('appointments', { title, type, date: dateStr }); window.uiManager.closeGenericModal(); this.render(); }, async del(id, dateStr) { if(confirm('Supprimer ?')) { await DataService.delete('appointments', id); this.openDayModal(dateStr); this.render(); } } };
+
+        const siteManager = {
+            async addNote() {
+                const clients = await DataService.get('clients');
+                let ops = ''; clients.forEach(c => ops += `<option value="${c.name}">${c.name}</option>`);
+                window.uiManager.openGenericModal('Note de Chantier', `
+                    <div class="space-y-4">
+                        <select id="site-client" class="w-full p-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl outline-none">${ops}</select>
+                        <textarea id="site-note" rows="3" class="w-full p-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl outline-none" placeholder="Avancement..."></textarea>
+                        <button onclick="siteManager.save()" class="w-full bg-brand-600 text-white font-bold p-4 rounded-xl">Publier</button>
+                    </div>
+                `);
+            },
+            async save() {
+                const client = document.getElementById('site-client').value;
+                const note = document.getElementById('site-note').value;
+                if(!client) return;
+                // Just visual for demo
+                const feed = document.getElementById('sites-feed');
+                feed.innerHTML = `<div class="glass p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 animate-fade-in"><div class="flex items-center gap-3 mb-2"><div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">${client.charAt(0)}</div><div class="font-bold dark:text-white">${client}</div></div><p class="text-slate-600 dark:text-slate-300">${note}</p></div>` + feed.innerHTML;
+                window.uiManager.closeGenericModal();
+            }
+        };
+
+        const settingsManager={
+            async load(){
+                const s=await DataService.get('settings');
+                if(s.length>0) {
+                    const c = s[0];
+                    if(document.getElementById('set-company')) document.getElementById('set-company').value=c.company||'';
+                    if(document.getElementById('set-siret')) document.getElementById('set-siret').value=c.siret||'';
+                    if(document.getElementById('set-address')) document.getElementById('set-address').value=c.address||'';
+                    if(document.getElementById('set-decennale')) document.getElementById('set-decennale').value=c.decennale||'';
+                    if(document.getElementById('set-rge')) document.getElementById('set-rge').value=c.rge||'';
+                    if(document.getElementById('set-tva-intra')) document.getElementById('set-tva-intra').value=c.tvaintra||'';
+                    if(c.logo) document.getElementById('preview-logo').innerHTML = `<img src="${c.logo}" class="w-full h-full object-contain">`;
+                }
+                if(auth && auth.currentUser) {
+                    document.getElementById('settings-email').innerText = auth.currentUser.email;
+                    document.getElementById('set-username').value = auth.currentUser.displayName || '';
+                    if(auth.currentUser.photoURL) document.getElementById('settings-photo').src = auth.currentUser.photoURL;
+                }
+            },
+            handleLogo(input) {
+                const file = input.files[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    document.getElementById('preview-logo').innerHTML = `<img src="${reader.result}" class="w-full h-full object-contain">`;
+                    document.getElementById('set-logo').dataset.b64 = reader.result;
+                };
+                reader.readAsDataURL(file);
+            },
+            async save(e){
+                e.preventDefault();
+                const logoB64 = document.getElementById('set-logo').dataset.b64 || null;
+                const current = await DataService.get('settings');
+                const oldLogo = (current.length > 0) ? current[0].logo : null;
+
+                await DataService.saveSettings({
+                    company:document.getElementById('set-company').value,
+                    siret:document.getElementById('set-siret').value,
+                    address:document.getElementById('set-address').value,
+                    decennale:document.getElementById('set-decennale').value,
+                    rge:document.getElementById('set-rge').value,
+                    tvaintra:document.getElementById('set-tva-intra').value,
+                    logo: logoB64 || oldLogo
+                });
+                alert('OK');
+            },
+            async updateProfile() {
+                const newName = document.getElementById('set-username').value;
+                if(auth.currentUser) {
+                    try { await updateProfile(auth.currentUser, { displayName: newName }); document.getElementById('user-name').innerText = newName; alert("Profil mis à jour !"); } catch(e) { console.error(e); alert("Erreur"); }
+                }
+            }
+        };
+
+        const aiManager={openModal:()=>document.getElementById('modal-ai').classList.remove('hidden'),closeModal:()=>document.getElementById('modal-ai').classList.add('hidden'),async generate(){const b=document.getElementById('ai-btn-generate');b.innerHTML='...';await new Promise(r=>setTimeout(r,1000));window.editorManager.lines=[{d:"Peinture complète",q:1,p:450,tva:0.1},{d:"Pose sol",q:20,p:40,tva:0.2}];window.editorManager.renderLines();this.closeModal();b.innerHTML='Générer';}};
+        const uiManager={openGenericModal(t,c){const m=document.getElementById('modal-generic');m.innerHTML=`<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`;m.classList.remove('hidden');},closeGenericModal(){document.getElementById('modal-generic').classList.add('hidden');}};
+        const themeManager={toggle:()=>{document.documentElement.classList.toggle('dark');}};
+
+        // INIT
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                DataService.userId = user.uid;
+                document.getElementById('user-name').innerText = user.displayName;
+                if(user.photoURL) document.getElementById('user-photo').src = user.photoURL;
+                document.getElementById('dash-name').innerText = user.displayName ? user.displayName.split(' ')[0] : 'Chef';
+                document.getElementById('view-login').classList.remove('active');
+                document.getElementById('view-login').classList.add('hidden');
+                window.subscriptionManager = { checkLimit: async () => true, checkForSuccess: () => {} };
+                // Initialize Signature
+                window.signatureManager.init();
+                router.navigate('home');
+            } else {
+                document.getElementById('view-login').classList.add('active');
+                document.getElementById('view-login').classList.remove('hidden');
+            }
+        });
+        
+        // Globals
+        window.editorManager=editorManager; window.clientManager=clientManager; window.itemManager=itemManager;
+        window.calendarManager=calendarManager; window.settingsManager=settingsManager; window.aiManager=aiManager; window.siteManager=siteManager;
+        window.uiManager=uiManager; window.themeManager=themeManager;
+        window.signatureManager=signatureManager;
+    </script>
+</body>
+</html>
