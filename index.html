@@ -891,9 +891,12 @@
                 catch (e) {
                     console.error(e);
                     let msg = "Erreur de connexion.";
+                    // Detailed error handling
+                    msg += ` [${e.code}] ${e.message}`;
+
                     if (e.code === 'auth/unauthorized-domain') msg = "⚠️ Domaine non autorisé. Ajoutez ce domaine dans Firebase Console > Auth > Settings > Authorized Domains.";
                     else if (e.code === 'auth/popup-closed-by-user') msg = "Connexion annulée par l'utilisateur.";
-                    else msg = e.message;
+                    else if (e.code === 'auth/internal-error') msg = "Erreur interne Google. Vérifiez l'email de support dans la console Firebase (Project Settings > General).";
 
                     errorDiv.innerText = msg;
                     errorDiv.classList.remove('hidden');
