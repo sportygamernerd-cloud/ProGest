@@ -270,18 +270,32 @@
             <a onclick="router.navigate('calendar')" id="nav-calendar"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
                     class="fa-solid fa-calendar w-5"></i> Agenda</a>
-            <a onclick="router.navigate('clients')" id="nav-clients"
-                class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
-                    class="fa-solid fa-users w-5"></i> Clients</a>
-            <a onclick="router.navigate('items')" id="nav-items"
-                class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
-                    class="fa-solid fa-box w-5"></i> Articles</a>
-            <a onclick="router.navigate('expenses')" id="nav-expenses"
-                class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
-                    class="fa-solid fa-receipt w-5"></i> Dépenses</a>
-            <a onclick="router.navigate('deals')" id="nav-deals"
-                class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
-                    class="fa-solid fa-tags w-5"></i> Bons Plans</a>
+
+            <!-- DROPDOWN GESTION -->
+            <div>
+                <button
+                    onclick="document.getElementById('submenu-gestion').classList.toggle('hidden');document.getElementById('chevron-gestion').classList.toggle('rotate-180')"
+                    class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer group">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-briefcase w-5"></i> Gestion</div>
+                    <i id="chevron-gestion"
+                        class="fa-solid fa-chevron-down text-xs transition-transform duration-200"></i>
+                </button>
+                <div id="submenu-gestion" class="hidden pl-4 space-y-1 mt-1">
+                    <a onclick="router.navigate('clients')" id="nav-clients"
+                        class="nav-item flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl text-slate-500 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors cursor-pointer"><i
+                            class="fa-solid fa-users w-4"></i> Clients</a>
+                    <a onclick="router.navigate('items')" id="nav-items"
+                        class="nav-item flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl text-slate-500 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors cursor-pointer"><i
+                            class="fa-solid fa-box w-4"></i> Articles</a>
+                    <a onclick="router.navigate('expenses')" id="nav-expenses"
+                        class="nav-item flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl text-slate-500 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors cursor-pointer"><i
+                            class="fa-solid fa-receipt w-4"></i> Dépenses</a>
+                    <a onclick="router.navigate('deals')" id="nav-deals"
+                        class="nav-item flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-xl text-slate-500 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors cursor-pointer"><i
+                            class="fa-solid fa-tags w-4"></i> Bons Plans</a>
+                </div>
+            </div>
+
             <a onclick="router.navigate('settings')" id="nav-settings"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
                     class="fa-solid fa-cog w-5"></i> Paramètres</a>
@@ -1219,11 +1233,23 @@
                 }
 
                 // Update Nav Active State
-                document.querySelectorAll('.nav-btn, .nav-btn-mobile').forEach(b => { // Re-added from original, assuming nav-item was a typo
+                // Update Nav Active State
+                document.querySelectorAll('.nav-item, .nav-btn, .nav-btn-mobile').forEach(b => {
                     b.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600', 'text-slate-400', 'text-red-500');
                     if (b.classList.contains('nav-btn-mobile')) b.classList.add('text-slate-400');
-                    if (b.dataset.target === id) {
-                        if (b.classList.contains('nav-btn')) b.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600');
+
+                    const targetId = b.dataset.target || (b.id ? b.id.replace('nav-', '') : '');
+
+                    if (targetId === id) {
+                        if (b.classList.contains('nav-item') || b.classList.contains('nav-btn')) {
+                            b.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-brand-600');
+                            // Special case for sub-items in dropdown
+                            if (b.parentElement.id === 'submenu-gestion') {
+                                // Ensure dropdown is open
+                                document.getElementById('submenu-gestion').classList.remove('hidden');
+                                document.getElementById('chevron-gestion').classList.add('rotate-180');
+                            }
+                        }
                         else b.classList.add(id === 'deals' ? 'text-red-500' : 'text-brand-600');
                         b.classList.remove('text-slate-400');
                     }
