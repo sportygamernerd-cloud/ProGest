@@ -180,12 +180,39 @@
         }
 
         @media print {
-            width: 100%;
-        }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            .no-print,
+            #sidebar,
+            #mobile-nav,
+            #view-login,
+            .view-section,
+            #signature-pad-container {
+                display: none !important;
+            }
+
+            #print-area {
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 9999;
+            }
+
+            .print-page {
+                padding: 0;
+                margin: 0;
+                width: 100%;
+            }
         }
 
         #print-area {
-            display: none;
+            display: none !important;
         }
     </style>
 </head>
