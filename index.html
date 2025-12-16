@@ -342,10 +342,10 @@
                         <div class="text-xs font-bold text-slate-400 uppercase mb-2">Devis Signés</div>
                         <div class="text-2xl font-black text-slate-900 dark:text-white" id="stat-signed">--</div>
                     </div>
-                    <div class="glass p-5 rounded-2xl shadow-sm card-hover border border-slate-200 dark:border-slate-700 cursor-pointer"
-                        onclick="router.navigate('sites')">
-                        <div class="text-xs font-bold text-slate-400 uppercase mb-2">Chantiers Actifs</div>
-                        <div class="text-2xl font-black text-brand-600">3</div>
+                    <div
+                        class="glass p-5 rounded-2xl shadow-sm card-hover border border-slate-200 dark:border-slate-700">
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-2">Marge Nette</div>
+                        <div class="text-2xl font-black text-green-600" id="stat-margin">-- €</div>
                     </div>
                     <div class="bg-gradient-to-br from-brand-600 to-brand-800 p-5 rounded-2xl shadow-lg text-white cursor-pointer card-hover btn-action"
                         onclick="router.navigate('editor')">
@@ -1257,17 +1257,31 @@
                     chartInstance: null,
                     async load() {
                         const d = await DataService.get('docs');
+                        const e = await DataService.get('expenses'); // Fetch expenses
+
                         let r = 0, s = 0;
                         d.forEach(x => { if (x.status === 'validated' || x.type === 'facture') { r += x.ttc; s++; } });
+
+                        let exp = 0;
+                        e.forEach(x => exp += x.amount); // Calculate total expenses
+
+                        const margin = r - exp; // Calculate Net Margin
+
                         if (document.getElementById('stat-revenue')) document.getElementById('stat-revenue').innerText = r.toFixed(0) + ' €';
                         if (document.getElementById('stat-signed')) document.getElementById('stat-signed').innerText = s;
+                        if (document.getElementById('stat-margin')) {
+                            document.getElementById('stat-margin').innerText = margin.toFixed(2) + ' €';
+                            // Color coding for margin
+                            if (margin >= 0) document.getElementById('stat-margin').className = "text-2xl font-black text-green-600";
+                            else document.getElementById('stat-margin').className = "text-2xl font-black text-red-600";
+                        }
 
                         const l = document.getElementById('dash-recent-list');
                         if (l) {
                             l.innerHTML = '';
                             if (d.length === 0) l.innerHTML = '<li class="p-6 text-center text-sm text-slate-400 italic">Aucun document</li>';
                             d.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5).forEach(x =>
-                                l.innerHTML += `<li class="p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer flex justify-between items-center border-b border-slate-100 dark:border-slate-800"><div class="font-bold dark:text-white">${x.clientName}</div><div class="font-black">${x.ttc.toFixed(2)}€</div></li>`
+                                l.innerHTML += `<li class="p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer flex justify-between items-center border-b border-slate-100 dark:border-800"><div class="font-bold dark:text-white">${x.clientName}</div><div class="font-black">${x.ttc.toFixed(2)}€</div></li>`
                             );
                         }
                         this.loadChart();
