@@ -925,7 +925,7 @@
                             class="gradient-fire">Premium</span></h2>
                     <p class="text-slate-500 dark:text-slate-400 mb-6">Débloquez tout le potentiel de ProGest pour votre
                         entreprise.</p>
-                    <div class="text-4xl font-black text-slate-900 dark:text-white mb-1">9.99€ <span
+                    <div class="text-4xl font-black text-slate-900 dark:text-white mb-1">19.00€ <span
                             class="text-sm font-bold text-slate-400">/mois</span></div>
                     <p class="text-xs text-slate-400">Sans engagement. Annulable à tout moment.</p>
                 </div>
@@ -1105,17 +1105,25 @@
             _online(s) { const h = s ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full status-dot"></span> ONLINE' : 'OFFLINE'; document.getElementById('badge-status-desktop').innerHTML = h; document.getElementById('badge-status-mobile').innerHTML = h; },
 
             // PREMIUM LOGIC
+            STRIPE_LINK: 'https://buy.stripe.com/PLACEHOLDER', // ⚠️ DEMANDE À TES PARENTS DE METTRE LEUR LIEN ICI
+
             checkPremium() {
                 if (this.isPremium) return true;
                 document.getElementById('modal-premium').classList.remove('hidden');
                 return false;
             },
             upgrade() {
-                this.isPremium = true;
-                localStorage.setItem('pg_premium', 'true');
-                document.getElementById('modal-premium').classList.add('hidden');
-                alert("Félicitations ! Vous êtes maintenant Premium 👑");
-                window.location.reload();
+                // 1. Open Payment Page
+                window.open(this.STRIPE_LINK, '_blank');
+
+                // 2. Simulate success (waiting for real backend)
+                if (confirm("Avez-vous effectué le paiement sur la page qui vient de s'ouvrir ?")) {
+                    this.isPremium = true;
+                    localStorage.setItem('pg_premium', 'true');
+                    document.getElementById('modal-premium').classList.add('hidden');
+                    alert("Félicitations ! Vous êtes maintenant Premium 👑");
+                    window.location.reload();
+                }
             },
             initPremium() {
                 this.isPremium = localStorage.getItem('pg_premium') === 'true';
