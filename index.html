@@ -8,10 +8,11 @@
 
     <!-- SÉCURITÉ CSP -->
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com https://apis.google.com https://*.firebaseapp.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com;">
+        content="default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://www.gstatic.com https://apis.google.com https://*.firebaseapp.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com;">
 
     <!-- MOTEUR GRAPHIQUE -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -335,6 +336,8 @@
                         class="fa-solid fa-moon dark:hidden"></i><i
                         class="fa-solid fa-sun hidden dark:inline"></i></button>
             </div>
+
+            <!-- STATS GRID -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div class="glass p-5 rounded-2xl shadow-sm card-hover border border-slate-200 dark:border-slate-700">
                     <div class="text-xs font-bold text-slate-400 uppercase mb-2">Chiffre d'Affaires</div>
@@ -349,11 +352,28 @@
                     <div class="text-xs font-bold text-slate-400 uppercase mb-2">Chantiers Actifs</div>
                     <div class="text-2xl font-black text-brand-600">3</div>
                 </div>
-                <div class="bg-gradient-to-br from-brand-500 to-brand-700 p-5 rounded-2xl shadow-lg text-white cursor-pointer card-hover btn-action"
+                <div class="bg-gradient-to-br from-brand-600 to-brand-800 p-5 rounded-2xl shadow-lg text-white cursor-pointer card-hover btn-action"
                     onclick="router.navigate('editor')">
                     <div class="text-xs font-bold text-brand-100 uppercase mb-2">Action Rapide</div>
                     <div class="text-lg font-black flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>
                         Créer Devis</div>
+                </div>
+            </div>
+
+            <!-- CHART SECTION (NEW) -->
+            <div class="glass p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg dark:text-white flex items-center gap-2"><i
+                            class="fa-solid fa-chart-line text-brand-500"></i> Évolution du C.A.</h3>
+                    <select id="chart-year"
+                        class="bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-lg px-2 py-1 outline-none border-none"
+                        onchange="dashboard.loadChart()">
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                    </select>
+                </div>
+                <div class="w-full h-64 relative">
+                    <canvas id="revenueChart"></canvas>
                 </div>
             </div>
 
@@ -1070,6 +1090,7 @@
         };
 
         window.dashboard = {
+            chartInstance: null,
             async load() {
                 const d = await DataService.get('docs');
                 let r = 0, s = 0;
@@ -1085,6 +1106,80 @@
                         l.innerHTML += `<li class="p-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer flex justify-between items-center border-b border-slate-100 dark:border-slate-800"><div class="font-bold dark:text-white">${x.clientName}</div><div class="font-black">${x.ttc.toFixed(2)}€</div></li>`
                     );
                 }
+                this.loadChart();
+            },
+            async loadChart() {
+                const ctx = document.getElementById('revenueChart');
+                if (!ctx) return;
+
+                const year = parseInt(document.getElementById('chart-year').value);
+                const docs = await DataService.get('docs');
+
+                // Init data array for 12 months
+                const monthlyData = Array(12).fill(0);
+
+                docs.forEach(d => {
+                    if (d.status === 'validated' || d.type === 'facture') {
+                        const date = new Date(d.date);
+                        if (date.getFullYear() === year) {
+                            monthlyData[date.getMonth()] += d.ttc;
+                        }
+                    }
+                });
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const color = isDark ? '#60a5fa' : '#3b82f6';
+                const bg = isDark ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)';
+
+                if (this.chartInstance) this.chartInstance.destroy();
+
+                this.chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+                        datasets: [{
+                            label: 'Chiffre d\'Affaires (€)',
+                            data: monthlyData,
+                            borderColor: color,
+                            backgroundColor: bg,
+                            borderWidth: 3,
+                            pointBackgroundColor: 'white',
+                            pointBorderColor: color,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: isDark ? '#1e293b' : 'white',
+                                titleColor: isDark ? 'white' : '#0f172a',
+                                bodyColor: isDark ? '#cbd5e1' : '#64748b',
+                                borderColor: isDark ? '#334155' : '#e2e8f0',
+                                borderWidth: 1,
+                                padding: 10,
+                                displayColors: false,
+                                callbacks: { label: (c) => c.raw.toFixed(2) + ' €' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: isDark ? '#334155' : '#e2e8f0', borderDash: [5, 5] },
+                                ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { family: 'Inter', size: 10 } }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { family: 'Inter', size: 10 } }
+                            }
+                        }
+                    }
+                });
             },
             async exportAccounting() {
                 const docs = await DataService.get('docs');
