@@ -905,6 +905,54 @@
     <div id="modal-generic"
         class="fixed inset-0 z-[60] hidden flex flex-col items-center justify-end sm:justify-center"></div>
 
+    <!-- PREMIUM MODAL -->
+    <div id="modal-premium"
+        class="fixed inset-0 z-[80] hidden flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 animate-fade-in">
+        <div
+            class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700 relative">
+            <button onclick="document.getElementById('modal-premium').classList.add('hidden')"
+                class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors z-10">
+                <i class="fa-solid fa-times"></i>
+            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <div class="p-8 bg-slate-50 dark:bg-slate-800/50 flex flex-col justify-center">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-600 rounded-2xl flex items-center justify-center text-white text-3xl mb-6 shadow-lg shadow-orange-500/30">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-900 dark:text-white mb-2">Passez <span
+                            class="gradient-fire">Premium</span></h2>
+                    <p class="text-slate-500 dark:text-slate-400 mb-6">Débloquez tout le potentiel de ProGest pour votre
+                        entreprise.</p>
+                    <div class="text-4xl font-black text-slate-900 dark:text-white mb-1">9.99€ <span
+                            class="text-sm font-bold text-slate-400">/mois</span></div>
+                    <p class="text-xs text-slate-400">Sans engagement. Annulable à tout moment.</p>
+                </div>
+                <div class="p-8">
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                            <i class="fa-solid fa-check-circle text-green-500 text-lg"></i> Assistant IA Illimité
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                            <i class="fa-solid fa-check-circle text-green-500 text-lg"></i> Export Comptable CSV
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                            <i class="fa-solid fa-check-circle text-green-500 text-lg"></i> Support Prioritaire
+                        </li>
+                        <li class="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                            <i class="fa-solid fa-check-circle text-green-500 text-lg"></i> Sauvegardes Cloud
+                        </li>
+                    </ul>
+                    <button onclick="DataService.upgrade()"
+                        class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-500/30 hover:scale-105 transition-transform btn-action">
+                        Activer le Premium
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- PRINT TEMPLATE -->
     <div id="print-area">
         <div class="print-page font-sans p-10 max-w-[210mm] mx-auto bg-white text-slate-900 h-full relative">
@@ -1037,7 +1085,7 @@
 
         // --- 4. DATA SERVICE ---
         const DataService = {
-            userId: null, isPremium: true,
+            userId: null, isPremium: false, // Default to false
             _getLocal(k) { return JSON.parse(localStorage.getItem('pg_' + k) || '[]'); },
             _saveLocal(k, v) { localStorage.setItem('pg_' + k, JSON.stringify(v)); },
             async get(c) {
@@ -1054,9 +1102,27 @@
                 this._saveLocal(c, this._getLocal(c).filter(x => x.id !== id));
             },
             async saveSettings(d) { this._saveLocal('settings', [d]); if (db && this.userId && !this.userId.startsWith('demo_')) try { await this.add('settings', d); } catch { } },
-            _online(s) { const h = s ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full status-dot"></span> ONLINE' : 'OFFLINE'; document.getElementById('badge-status-desktop').innerHTML = h; document.getElementById('badge-status-mobile').innerHTML = h; }
+            _online(s) { const h = s ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full status-dot"></span> ONLINE' : 'OFFLINE'; document.getElementById('badge-status-desktop').innerHTML = h; document.getElementById('badge-status-mobile').innerHTML = h; },
+
+            // PREMIUM LOGIC
+            checkPremium() {
+                if (this.isPremium) return true;
+                document.getElementById('modal-premium').classList.remove('hidden');
+                return false;
+            },
+            upgrade() {
+                this.isPremium = true;
+                localStorage.setItem('pg_premium', 'true');
+                document.getElementById('modal-premium').classList.add('hidden');
+                alert("Félicitations ! Vous êtes maintenant Premium 👑");
+                window.location.reload();
+            },
+            initPremium() {
+                this.isPremium = localStorage.getItem('pg_premium') === 'true';
+            }
         };
         window.DataService = DataService;
+        DataService.initPremium();
 
         // --- 5. AUTH MANAGER (UPDATED FOR DEMO) ---
         window.authManager = {
@@ -1366,6 +1432,24 @@
                     else document.getElementById('stat-margin').className = "text-2xl font-black text-red-600";
                 }
 
+                // PREMIUM BUTTON IN DASHBOARD
+                const premiumBtn = document.getElementById('btn-go-premium');
+                if (!DataService.isPremium) {
+                    if (!premiumBtn) {
+                        const statsGrid = document.querySelector('#view-home .grid');
+                        const btn = document.createElement('div');
+                        btn.id = 'btn-go-premium';
+                        btn.className = 'bg-gradient-to-br from-amber-400 to-orange-600 p-5 rounded-2xl shadow-lg text-white cursor-pointer card-hover btn-action relative overflow-hidden';
+                        btn.onclick = () => document.getElementById('modal-premium').classList.remove('hidden');
+                        btn.innerHTML = `<i class="fa-solid fa-crown absolute -right-4 -bottom-4 text-8xl text-white/20"></i>
+                                         <div class="text-xs font-bold text-amber-100 uppercase mb-2">Upgrade</div>
+                                         <div class="text-lg font-black flex items-center gap-2">Passer Premium</div>`;
+                        statsGrid.appendChild(btn);
+                    }
+                } else if (premiumBtn) {
+                    premiumBtn.remove();
+                }
+
                 const l = document.getElementById('dash-recent-list');
                 if (l) {
                     l.innerHTML = '';
@@ -1450,6 +1534,7 @@
                 });
             },
             async exportAccounting() {
+                if (!DataService.checkPremium()) return; // PREMIUM CHECK
                 const docs = await DataService.get('docs');
                 if (docs.length === 0) return alert("Aucune facture à exporter.");
 
@@ -1743,7 +1828,21 @@
             }
         };
 
-        const aiManager = { openModal: () => document.getElementById('modal-ai').classList.remove('hidden'), closeModal: () => document.getElementById('modal-ai').classList.add('hidden'), async generate() { const b = document.getElementById('ai-btn-generate'); b.innerHTML = '...'; await new Promise(r => setTimeout(r, 1000)); window.editorManager.lines = [{ d: "Peinture complète", q: 1, p: 450, tva: 0.1 }, { d: "Pose sol", q: 20, p: 40, tva: 0.2 }]; window.editorManager.renderLines(); this.closeModal(); b.innerHTML = 'Générer'; } };
+        const aiManager = {
+            openModal: () => {
+                if (!DataService.checkPremium()) return; // PREMIUM CHECK
+                document.getElementById('modal-ai').classList.remove('hidden');
+            },
+            closeModal: () => document.getElementById('modal-ai').classList.add('hidden'),
+            async generate() {
+                const b = document.getElementById('ai-btn-generate'); b.innerHTML = '...';
+                await new Promise(r => setTimeout(r, 1000));
+                window.editorManager.lines = [{ d: "Peinture complète", q: 1, p: 450, tva: 0.1 }, { d: "Pose sol", q: 20, p: 40, tva: 0.2 }];
+                window.editorManager.renderLines();
+                this.closeModal();
+                b.innerHTML = 'Générer';
+            }
+        };
         const uiManager = { openGenericModal(t, c) { const m = document.getElementById('modal-generic'); m.innerHTML = `<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`; m.classList.remove('hidden'); }, closeGenericModal() { document.getElementById('modal-generic').classList.add('hidden'); } };
         const themeManager = { toggle: () => { document.documentElement.classList.toggle('dark'); } };
         const menuManager = {
