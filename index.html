@@ -215,11 +215,89 @@
         #print-area {
             display: none !important;
         }
+
+        /* DRAWER MENU */
+        #main-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #main-menu.open {
+            transform: translateX(0);
+        }
+
+        #menu-overlay.open {
+            display: block;
+            opacity: 1;
+        }
     </style>
 </head>
 
 <body
     class="bg-slate-50 text-slate-800 antialiased dark:bg-[#0f172a] dark:text-slate-200 h-screen overflow-hidden flex transition-colors duration-300">
+
+    <!-- HAMBURGER BUTTON (Mobile) -->
+    <button onclick="menuManager.open()"
+        class="fixed top-4 right-4 z-50 w-12 h-12 bg-white dark:bg-slate-800 rounded-full shadow-xl flex items-center justify-center text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 md:hidden">
+        <i class="fa-solid fa-bars text-xl"></i>
+    </button>
+
+    <!-- RIGHT DRAWER MENU -->
+    <div id="menu-overlay" onclick="menuManager.close()"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden transition-opacity opacity-0"></div>
+    <div id="main-menu"
+        class="fixed inset-y-0 right-0 w-80 bg-white dark:bg-slate-900 shadow-2xl z-[70] flex flex-col border-l border-slate-200 dark:border-slate-800">
+        <div class="p-6 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+            <span class="font-black text-xl dark:text-white">Menu</span>
+            <button onclick="menuManager.close()"
+                class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-2">
+            <a onclick="router.navigate('home')"
+                class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
+                <i class="fa-solid fa-home w-6 text-center"></i> Tableau de bord
+            </a>
+            <a onclick="router.navigate('editor')"
+                class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
+                <i class="fa-solid fa-pen-nib w-6 text-center"></i> Éditeur
+            </a>
+            <a onclick="router.navigate('calendar')"
+                class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
+                <i class="fa-solid fa-calendar w-6 text-center"></i> Agenda
+            </a>
+            <div class="border-t border-slate-100 dark:border-slate-800 my-2"></div>
+            <a onclick="router.navigate('clients')"
+                class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
+                <i class="fa-solid fa-users w-6 text-center"></i> Clients
+            </a>
+            <a onclick="router.navigate('items')"
+                class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
+                <i class="fa-solid fa-box w-6 text-center"></i> Articles
+            </a>
+            <a onclick="router.navigate('expenses')"
+                class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
+                <i class="fa-solid fa-receipt w-6 text-center"></i> Dépenses
+            </a>
+            <a onclick="router.navigate('deals')"
+                class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
+                <i class="fa-solid fa-tags w-6 text-center"></i> Bons Plans
+            </a>
+            <div class="border-t border-slate-100 dark:border-slate-800 my-2"></div>
+            <a onclick="router.navigate('settings')"
+                class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
+                <i class="fa-solid fa-cog w-6 text-center"></i> Paramètres
+            </a>
+        </nav>
+        <div class="p-6 border-t border-slate-100 dark:border-slate-800">
+            <button onclick="themeManager.toggle()"
+                class="w-full py-4 rounded-xl border border-slate-200 dark:border-slate-700 font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-moon dark:hidden"></i><i class="fa-solid fa-sun hidden dark:inline"></i> Mode
+                Sombre
+            </button>
+        </div>
+    </div>
 
     <!-- 0. LOGIN SCREEN -->
     <section id="view-login"
@@ -1215,6 +1293,9 @@
         // --- 7. CORE MANAGERS ---
         window.router = {
             navigate: (id) => {
+                // Close menu if open
+                if (window.menuManager) window.menuManager.close();
+
                 document.querySelectorAll('.view-section').forEach(e => { if (e.id !== 'view-login') { e.classList.remove('active'); e.classList.add('hidden'); } });
                 const target = document.getElementById('view-' + id);
                 if (target) {
@@ -1665,6 +1746,18 @@
         const aiManager = { openModal: () => document.getElementById('modal-ai').classList.remove('hidden'), closeModal: () => document.getElementById('modal-ai').classList.add('hidden'), async generate() { const b = document.getElementById('ai-btn-generate'); b.innerHTML = '...'; await new Promise(r => setTimeout(r, 1000)); window.editorManager.lines = [{ d: "Peinture complète", q: 1, p: 450, tva: 0.1 }, { d: "Pose sol", q: 20, p: 40, tva: 0.2 }]; window.editorManager.renderLines(); this.closeModal(); b.innerHTML = 'Générer'; } };
         const uiManager = { openGenericModal(t, c) { const m = document.getElementById('modal-generic'); m.innerHTML = `<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`; m.classList.remove('hidden'); }, closeGenericModal() { document.getElementById('modal-generic').classList.add('hidden'); } };
         const themeManager = { toggle: () => { document.documentElement.classList.toggle('dark'); } };
+        const menuManager = {
+            open() {
+                document.getElementById('main-menu').classList.add('open');
+                document.getElementById('menu-overlay').classList.remove('hidden');
+                setTimeout(() => document.getElementById('menu-overlay').classList.add('open'), 10);
+            },
+            close() {
+                document.getElementById('main-menu').classList.remove('open');
+                document.getElementById('menu-overlay').classList.remove('open');
+                setTimeout(() => document.getElementById('menu-overlay').classList.add('hidden'), 300);
+            }
+        };
 
         // INIT
         if (auth) {
@@ -1696,7 +1789,8 @@
         window.clientManager = clientManager; window.itemManager = itemManager;
         window.calendarManager = calendarManager; window.settingsManager = settingsManager;
         window.aiManager = aiManager; window.siteManager = siteManager;
-        window.uiManager = uiManager; window.themeManager = themeManager;
+        window.uiManager = uiManager; window.themeManager = themeManager; window.menuManager = menuManager;
+        window.signatureManager = signatureManager;
     </script>
 </body>
 
