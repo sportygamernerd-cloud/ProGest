@@ -1955,12 +1955,19 @@
                     DataService.userId = user.uid;
 
                     // Update UI
-                    document.getElementById('user-name').innerText = user.displayName || 'Utilisateur';
-                    if (user.photoURL) document.getElementById('user-photo').src = user.photoURL;
-                    document.getElementById('dash-name').innerText = (user.displayName || 'Chef').split(' ')[0];
-                    document.getElementById('settings-email').innerText = user.email;
-                    document.getElementById('set-username').value = user.displayName;
-                    if (user.photoURL) document.getElementById('settings-photo').src = user.photoURL;
+                    const userName = document.getElementById('user-name');
+                    const userPhoto = document.getElementById('user-photo');
+                    const dashName = document.getElementById('dash-name');
+                    const settingsEmail = document.getElementById('settings-email');
+                    const setUsername = document.getElementById('set-username');
+                    const settingsPhoto = document.getElementById('settings-photo');
+
+                    if (userName) userName.innerText = user.displayName || 'Utilisateur';
+                    if (userPhoto && user.photoURL) userPhoto.src = user.photoURL;
+                    if (dashName) dashName.innerText = (user.displayName || 'Chef').split(' ')[0];
+                    if (settingsEmail) settingsEmail.innerText = user.email;
+                    if (setUsername) setUsername.value = user.displayName;
+                    if (settingsPhoto && user.photoURL) settingsPhoto.src = user.photoURL;
 
                     // Mock Subscription (Copy from Demo)
                     window.subscriptionManager = { checkLimit: async () => true, checkForSuccess: () => { } };
