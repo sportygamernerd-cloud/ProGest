@@ -1426,6 +1426,12 @@
                 if (target) {
                     target.classList.remove('hidden');
                     target.classList.add('active');
+                    // Force display for home
+                    if (id === 'home') {
+                        target.style.display = 'block';
+                    } else {
+                        target.style.display = '';
+                    }
 
                     // Init specific managers
                     if (id === 'home' && window.dashboard) window.dashboard.load();
@@ -1982,6 +1988,7 @@
                     if (loginView) {
                         loginView.classList.remove('active');
                         loginView.classList.add('hidden');
+                        loginView.style.display = 'none'; // Force hide
                     }
                     if (window.router) {
                         router.navigate('home');
