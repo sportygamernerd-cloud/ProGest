@@ -1037,6 +1037,12 @@
     </div>
 
     <!-- LOGIC -->
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            alert("Erreur JS: " + msg + "\nLigne: " + line);
+            return false;
+        };
+    </script>
     <script type="module">
         // --- 1. CONFIGURATION ---
         const firebaseConfig = {
@@ -1115,6 +1121,7 @@
                 return this._getLocal(c);
             },
             async add(c, d) {
+                // alert(`Saving to ${c}...`); // Debug
                 d.uid = this.userId || 'guest';
                 d.created_at = new Date().toISOString();
                 console.log(`Adding to ${c}, User: ${this.userId}, DB: ${!!db}`);
@@ -1906,10 +1913,14 @@
         window.aiManager = aiManager; window.siteManager = siteManager;
         window.uiManager = uiManager; window.themeManager = themeManager; window.menuManager = menuManager;
 
+        if (!window.clientManager) alert("ERREUR CRITIQUE: clientManager non chargé !");
+        console.log("Modules attached to window");
+
         // --- AUTH STATE LISTENER (MOVED TO END) ---
         if (auth) {
             onAuthStateChanged(auth, (user) => {
                 if (user) {
+                    // alert("Utilisateur connecté: " + user.email); // Debug
                     console.log("Utilisateur connecté:", user.uid);
                     DataService.userId = user.uid;
 
