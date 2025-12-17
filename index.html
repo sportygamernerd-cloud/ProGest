@@ -60,7 +60,7 @@
             animation: fadeIn 0.3s ease-out forwards;
         }
 
-        #view-editor.active,
+        #view-devis.active,
         #view-login.active {
             display: flex !important;
         }
@@ -259,9 +259,9 @@
                 class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
                 <i class="fa-solid fa-home w-6 text-center"></i> Tableau de bord
             </a>
-            <a onclick="router.navigate('editor')"
+            <a onclick="router.navigate('devis')"
                 class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
-                <i class="fa-solid fa-pen-nib w-6 text-center"></i> Éditeur
+                <i class="fa-solid fa-pen-nib w-6 text-center"></i> Devis
             </a>
             <a onclick="router.navigate('calendar')"
                 class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold cursor-pointer">
@@ -342,9 +342,9 @@
             <a onclick="router.navigate('home')" id="nav-home"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
                     class="fa-solid fa-home w-5"></i> Tableau de bord</a>
-            <a onclick="router.navigate('editor')" id="nav-editor"
+            <a onclick="router.navigate('devis')" id="nav-devis"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
-                    class="fa-solid fa-pen-nib w-5"></i> Éditeur</a>
+                    class="fa-solid fa-pen-nib w-5"></i> Devis</a>
             <a onclick="router.navigate('calendar')" id="nav-calendar"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
                     class="fa-solid fa-calendar w-5"></i> Agenda</a>
@@ -428,7 +428,7 @@
                     <div class="text-2xl font-black text-green-600" id="stat-margin">-- €</div>
                 </div>
                 <div class="bg-gradient-to-br from-brand-600 to-brand-800 p-5 rounded-2xl shadow-lg text-white cursor-pointer card-hover btn-action"
-                    onclick="router.navigate('editor')">
+                    onclick="router.navigate('devis')">
                     <div class="text-xs font-bold text-brand-100 uppercase mb-2">Action Rapide</div>
                     <div class="text-lg font-black flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>
                         Créer Devis</div>
@@ -478,7 +478,7 @@
             <div class="glass rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between">
                     <h3 class="font-bold dark:text-white">Derniers Documents</h3><button
-                        onclick="router.navigate('editor')"
+                        onclick="router.navigate('devis')"
                         class="text-xs font-bold text-brand-600 bg-brand-50 px-3 py-1 rounded-lg">Nouveau</button>
                 </div>
                 <ul id="dash-recent-list" class="divide-y divide-slate-200 dark:divide-slate-700"></ul>
@@ -496,18 +496,18 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="deals-grid"></div>
         </section>
 
-        <!-- 3. EDITOR -->
-        <section id="view-editor"
+        <!-- 3. DEVIS -->
+        <section id="view-devis"
             class="view-section hidden p-0 h-full flex flex-col max-w-5xl mx-auto glass md:shadow-2xl md:my-6 md:rounded-3xl md:h-[calc(100vh-3rem)] overflow-hidden border border-slate-200 dark:border-slate-700">
             <div
                 class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center glass z-20">
                 <button onclick="router.navigate('home')" class="text-slate-500 font-bold text-sm"><i
                         class="fa-solid fa-arrow-left mr-1"></i> Retour</button>
-                <div class="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1"><button id="btn-type-devis"
-                        onclick="editorManager.setType('devis')"
-                        class="px-4 py-1.5 rounded-lg text-xs font-bold">DEVIS</button><button id="btn-type-facture"
-                        onclick="editorManager.setType('facture')"
-                        class="px-4 py-1.5 rounded-lg text-xs font-bold">FACTURE</button></div>
+                <div class="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1">
+                    <span
+                        class="px-4 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-slate-700 text-brand-600 shadow-sm">NOUVEAU
+                        DEVIS</span>
+                </div>
                 <div class="flex gap-2">
                     <button onclick="editorManager.print()"
                         class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"><i
@@ -847,7 +847,7 @@
                 class="text-[10px] font-bold">Accueil</span></button><button onclick="router.navigate('sites')"
             class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="sites"><i
                 class="fa-solid fa-hard-hat mb-1 text-lg"></i><span
-                class="text-[10px] font-bold">Chantier</span></button><button onclick="router.navigate('editor')"
+                class="text-[10px] font-bold">Chantier</span></button><button onclick="router.navigate('devis')"
             class="p-2 -mt-10">
             <div
                 class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-brand-500/40 hover:scale-110 transition-all">
@@ -1378,7 +1378,7 @@
 
                     // Init specific managers
                     if (id === 'home') dashboard.load();
-                    if (id === 'editor') window.editorManager.init(); // Re-added from original
+                    if (id === 'devis') window.editorManager.init(); // Re-added from original
                     if (id === 'items') itemManager.render(); // Corrected from itemsManager
                     if (id === 'clients') clientManager.render(); // Corrected from clientsManager
                     if (id === 'calendar') calendarManager.render();
@@ -1571,22 +1571,13 @@
                 this.lines = [{ d: '', q: 1, p: 0, tva: 0.2 }];
                 this.renderLines();
                 document.getElementById('editor-date').valueAsDate = new Date();
-                this.setType('devis');
 
                 // Reset signature logic
                 window.signatureManager.clear();
                 document.getElementById('signature-preview-banner').classList.add('hidden');
                 document.getElementById('signature-preview-img').src = '';
             },
-            setType(t) {
-                if (t === 'devis') {
-                    document.getElementById('btn-type-devis').className = 'px-5 py-2 rounded-lg text-sm font-bold bg-white dark:bg-slate-700 text-brand-600 shadow-sm';
-                    document.getElementById('btn-type-facture').className = 'px-5 py-2 rounded-lg text-sm font-bold text-slate-500';
-                } else {
-                    document.getElementById('btn-type-facture').className = 'px-5 py-2 rounded-lg text-sm font-bold bg-white dark:bg-slate-700 text-brand-600 shadow-sm';
-                    document.getElementById('btn-type-devis').className = 'px-5 py-2 rounded-lg text-sm font-bold text-slate-500';
-                }
-            },
+
             renderLines() {
                 const e = document.getElementById('editor-lines');
                 e.innerHTML = '';
@@ -1688,7 +1679,7 @@
             }
         };
 
-        const clientManager = { async render() { const e = document.getElementById('clients-list-body'); const c = await DataService.get('clients'); e.innerHTML = ''; if (c.length === 0) e.innerHTML = '<p class="text-slate-400 p-4">Vide</p>'; c.forEach(x => e.innerHTML += `<div class="glass p-4 rounded-xl shadow border border-slate-200/50 flex justify-between"><span class="font-bold dark:text-white text-slate-900">${x.name}</span><button onclick="clientManager.del('${x.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></div>`); }, openAddModal() { const e = document.getElementById('view-editor').classList.contains('active'); if (e) this.renderSel(); else this.openNewForm(); }, async renderSel() { const c = await DataService.get('clients'); let h = '<div class="space-y-2 mb-4 max-h-60 overflow-auto custom-scrollbar">'; c.forEach(x => h += `<div onclick="clientManager.sel('${x.id}','${x.name}')" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer font-bold text-slate-900 dark:text-white hover:bg-brand-100">${x.name}</div>`); h += '</div><button onclick="uiManager.closeGenericModal();clientManager.openNewForm()" class="text-brand-600 text-sm font-bold">Nouveau Client</button>'; uiManager.openGenericModal('Choisir', h); }, openNewForm() { uiManager.openGenericModal('Nouveau Client', `<input id="new-c-name" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Nom"><button onclick="clientManager.save(true)" class="w-full bg-brand-600 text-white p-3 rounded-xl font-bold">Ajouter</button>`); }, async save(s = false) { const n = document.getElementById('new-c-name').value; if (!n) return; const r = await DataService.add('clients', { name: n }); if (s) this.sel(r.id, r.name); else { uiManager.closeGenericModal(); this.render(); } }, sel(i, n) { document.getElementById('editor-client-preview').innerText = n; document.getElementById('editor-client-preview').classList.add('text-slate-900', 'dark:text-white'); document.getElementById('editor-client-id').value = i; uiManager.closeGenericModal(); }, async del(i) { if (confirm('Supprimer ?')) { await DataService.delete('clients', i); this.render(); } } };
+        const clientManager = { async render() { const e = document.getElementById('clients-list-body'); const c = await DataService.get('clients'); e.innerHTML = ''; if (c.length === 0) e.innerHTML = '<p class="text-slate-400 p-4">Vide</p>'; c.forEach(x => e.innerHTML += `<div class="glass p-4 rounded-xl shadow border border-slate-200/50 flex justify-between"><span class="font-bold dark:text-white text-slate-900">${x.name}</span><button onclick="clientManager.del('${x.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></div>`); }, openAddModal() { const e = document.getElementById('view-devis').classList.contains('active'); if (e) this.renderSel(); else this.openNewForm(); }, async renderSel() { const c = await DataService.get('clients'); let h = '<div class="space-y-2 mb-4 max-h-60 overflow-auto custom-scrollbar">'; c.forEach(x => h += `<div onclick="clientManager.sel('${x.id}','${x.name}')" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer font-bold text-slate-900 dark:text-white hover:bg-brand-100">${x.name}</div>`); h += '</div><button onclick="uiManager.closeGenericModal();clientManager.openNewForm()" class="text-brand-600 text-sm font-bold">Nouveau Client</button>'; uiManager.openGenericModal('Choisir', h); }, openNewForm() { uiManager.openGenericModal('Nouveau Client', `<input id="new-c-name" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Nom"><button onclick="clientManager.save(true)" class="w-full bg-brand-600 text-white p-3 rounded-xl font-bold">Ajouter</button>`); }, async save(s = false) { const n = document.getElementById('new-c-name').value; if (!n) return; const r = await DataService.add('clients', { name: n }); if (s) this.sel(r.id, r.name); else { uiManager.closeGenericModal(); this.render(); } }, sel(i, n) { document.getElementById('editor-client-preview').innerText = n; document.getElementById('editor-client-preview').classList.add('text-slate-900', 'dark:text-white'); document.getElementById('editor-client-id').value = i; uiManager.closeGenericModal(); }, async del(i) { if (confirm('Supprimer ?')) { await DataService.delete('clients', i); this.render(); } } };
         const itemManager = { async render(m = false) { const i = await DataService.get('items'); const e = m ? document.getElementById('modal-lib-list') : document.getElementById('items-list-body'); e.innerHTML = ''; i.forEach(x => { const a = m ? `onclick="editorManager.importItem('${x.title}',${x.price})"` : ''; e.innerHTML += `<div ${a} class="glass p-4 rounded-xl mb-2 flex justify-between cursor-pointer border border-slate-200/50 dark:border-slate-700"><span class="dark:text-white text-slate-900 font-bold">${x.title}</span><span class="font-black text-brand-600">${x.price}€</span></div>`; }); }, openAddModal() { uiManager.openGenericModal('Nouvelle Prestation', `<input id="new-i-t" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Titre"><input id="new-i-p" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Prix"><button onclick="itemManager.save()" class="w-full bg-brand-600 text-white p-3 rounded-xl font-bold">Ajouter</button>`); }, async save() { await DataService.add('items', { title: document.getElementById('new-i-t').value, price: parseFloat(document.getElementById('new-i-p').value) }); uiManager.closeGenericModal(); this.render(); } };
         const calendarManager = {
             currentDate: new Date(),
