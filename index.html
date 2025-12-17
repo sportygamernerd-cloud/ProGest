@@ -1452,8 +1452,10 @@
                             // Special case for sub-items in dropdown
                             if (b.parentElement.id === 'submenu-gestion') {
                                 // Ensure dropdown is open
-                                document.getElementById('submenu-gestion').classList.remove('hidden');
-                                document.getElementById('chevron-gestion').classList.add('rotate-180');
+                                const subMenu = document.getElementById('submenu-gestion');
+                                const chevron = document.getElementById('chevron-gestion');
+                                if (subMenu) subMenu.classList.remove('hidden');
+                                if (chevron) chevron.classList.add('rotate-180');
                             }
                         }
                         else b.classList.add(id === 'deals' ? 'text-red-500' : 'text-brand-600');
