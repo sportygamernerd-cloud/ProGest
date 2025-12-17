@@ -1067,6 +1067,14 @@
                     document.getElementById('set-username').value = user.displayName;
                     if (user.photoURL) document.getElementById('settings-photo').src = user.photoURL;
 
+                    // Mock Subscription (Copy from Demo)
+                    window.subscriptionManager = { checkLimit: async () => true, checkForSuccess: () => { } };
+
+                    // Initialize Signature (Copy from Demo)
+                    if (window.signatureManager) {
+                        window.signatureManager.init();
+                    }
+
                     // Switch View
                     document.getElementById('view-login').classList.remove('active');
                     document.getElementById('view-login').classList.add('hidden');
