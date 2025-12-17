@@ -1978,9 +1978,14 @@
                     }
 
                     // Switch View
-                    document.getElementById('view-login').classList.remove('active');
-                    document.getElementById('view-login').classList.add('hidden');
-                    router.navigate('home');
+                    const loginView = document.getElementById('view-login');
+                    if (loginView) {
+                        loginView.classList.remove('active');
+                        loginView.classList.add('hidden');
+                    }
+                    if (window.router) {
+                        router.navigate('home');
+                    }
                 } else {
                     console.log("Utilisateur déconnecté");
                     DataService.userId = null;
