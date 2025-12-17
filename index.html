@@ -1215,11 +1215,17 @@
                     DataService.userId = demoUser.uid;
 
                     // Update UI
-                    document.getElementById('user-name').innerText = demoUser.displayName;
-                    document.getElementById('user-photo').src = demoUser.photoURL;
-                    document.getElementById('dash-name').innerText = 'Démo';
-                    document.getElementById('settings-email').innerText = demoUser.email;
-                    document.getElementById('set-username').value = demoUser.displayName;
+                    const userName = document.getElementById('user-name');
+                    const userPhoto = document.getElementById('user-photo');
+                    const dashName = document.getElementById('dash-name');
+                    const settingsEmail = document.getElementById('settings-email');
+                    const setUsername = document.getElementById('set-username');
+
+                    if (userName) userName.innerText = demoUser.displayName;
+                    if (userPhoto) userPhoto.src = demoUser.photoURL;
+                    if (dashName) dashName.innerText = 'Démo';
+                    if (settingsEmail) settingsEmail.innerText = demoUser.email;
+                    if (setUsername) setUsername.value = demoUser.displayName;
 
                     // Mock Subscription
                     window.subscriptionManager = { checkLimit: async () => true, checkForSuccess: () => { } };
