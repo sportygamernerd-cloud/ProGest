@@ -1419,8 +1419,7 @@
         // --- 7. CORE MANAGERS ---
         window.router = {
             navigate: (id) => {
-                // Close menu if open
-                if (window.menuManager) window.menuManager.close();
+                // Menu removed
 
                 document.querySelectorAll('.view-section').forEach(e => { if (e.id !== 'view-login') { e.classList.remove('active'); e.classList.add('hidden'); } });
                 const target = document.getElementById('view-' + id);
@@ -1928,18 +1927,7 @@
         };
         const uiManager = { openGenericModal(t, c) { const m = document.getElementById('modal-generic'); m.innerHTML = `<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`; m.classList.remove('hidden'); }, closeGenericModal() { document.getElementById('modal-generic').classList.add('hidden'); } };
         const themeManager = { toggle: () => { document.documentElement.classList.toggle('dark'); } };
-        const menuManager = {
-            open() {
-                document.getElementById('main-menu').classList.add('open');
-                document.getElementById('menu-overlay').classList.remove('hidden');
-                setTimeout(() => document.getElementById('menu-overlay').classList.add('open'), 10);
-            },
-            close() {
-                document.getElementById('main-menu').classList.remove('open');
-                document.getElementById('menu-overlay').classList.remove('open');
-                setTimeout(() => document.getElementById('menu-overlay').classList.add('hidden'), 300);
-            }
-        };
+        // menuManager removed
 
         // INIT
         if (!auth) {
