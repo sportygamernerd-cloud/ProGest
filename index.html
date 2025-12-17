@@ -348,6 +348,8 @@
                 P</div>
             <span class="font-black text-xl tracking-tight dark:text-white">ProGest<span
                     class="text-brand-600">.</span></span>
+            <span id="badge-status-desktop"
+                class="ml-auto text-[10px] font-bold bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full text-green-700 dark:text-green-400 flex items-center gap-1">ONLINE</span>
         </div>
         <nav class="flex-1 px-4 space-y-1">
             <a onclick="router.navigate('home')" id="nav-home"
@@ -1194,7 +1196,13 @@
                 this._saveLocal(c, this._getLocal(c).filter(x => x.id !== id));
             },
             async saveSettings(d) { this._saveLocal('settings', [d]); if (db && this.userId && !this.userId.startsWith('demo_')) try { await this.add('settings', d); } catch { } },
-            _online(s) { const h = s ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full status-dot"></span> ONLINE' : 'OFFLINE'; document.getElementById('badge-status-desktop').innerHTML = h; document.getElementById('badge-status-mobile').innerHTML = h; },
+            _online(s) {
+                const h = s ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full status-dot"></span> ONLINE' : 'OFFLINE';
+                const d = document.getElementById('badge-status-desktop');
+                const m = document.getElementById('badge-status-mobile');
+                if (d) d.innerHTML = h;
+                if (m) m.innerHTML = h;
+            },
 
             // PREMIUM LOGIC
             STRIPE_LINK: 'https://buy.stripe.com/PLACEHOLDER', // ⚠️ DEMANDE À TES PARENTS DE METTRE LEUR LIEN ICI
