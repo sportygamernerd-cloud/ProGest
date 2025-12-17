@@ -1136,9 +1136,8 @@
             _online(s) {
                 const h = s ? '<span class="w-1.5 h-1.5 bg-green-500 rounded-full status-dot"></span> ONLINE' : 'OFFLINE';
                 const d = document.getElementById('badge-status-desktop');
-                const m = document.getElementById('badge-status-mobile');
                 if (d) d.innerHTML = h;
-                if (m) m.innerHTML = h;
+                // Mobile badge removed
             },
 
             // PREMIUM LOGIC
