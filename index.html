@@ -1703,62 +1703,68 @@
             importItem(t, p) { this.lines.push({ d: t, q: 1, p, tva: 0.2 }); this.renderLines(); window.uiManager.closeGenericModal(); },
 
             // PRINT LOGIC (UPDATED WITH LEGAL, VAT & SIGNATURE)
+            // PRINT LOGIC (UPDATED WITH LEGAL, VAT & SIGNATURE)
             async print() {
-                const client = document.getElementById('editor-client-preview').innerText;
-                if (client === "Sélectionner...") return alert("Choisissez un client");
+                try {
+                    const client = document.getElementById('editor-client-preview').innerText;
+                    if (client === "Sélectionner...") return alert("Choisissez un client");
 
-                // Get Settings for Logo & Legal
-                const s = await DataService.get('settings');
-                const conf = s[0] || {};
+                    // Get Settings for Logo & Legal
+                    const s = await DataService.get('settings');
+                    const conf = s[0] || {};
 
-                document.getElementById('print-client-name').innerText = client;
-                document.getElementById('print-date').innerText = new Date().toLocaleDateString();
-                document.getElementById('print-ref').innerText = 'D-' + Date.now().toString().substr(-4);
+                    document.getElementById('print-client-name').innerText = client;
+                    document.getElementById('print-date').innerText = new Date().toLocaleDateString();
+                    document.getElementById('print-ref').innerText = 'D-' + Date.now().toString().substr(-4);
 
-                // Legal Info Header
-                let legal = `${conf.company || 'Mon Entreprise'}\nSIRET: ${conf.siret || 'Non renseigné'}\n${conf.address || ''}\nTVA Intra: ${conf.tvaintra || 'Non renseigné'}`;
-                document.getElementById('print-company-info').innerText = legal;
+                    // Legal Info Header
+                    let legal = `${conf.company || 'Mon Entreprise'}\nSIRET: ${conf.siret || 'Non renseigné'}\n${conf.address || ''}\nTVA Intra: ${conf.tvaintra || 'Non renseigné'}`;
+                    document.getElementById('print-company-info').innerText = legal;
 
-                // Legal Footer
-                document.getElementById('print-legal-footer').innerText = `Assurance Décennale: ${conf.decennale || 'Non renseignée'} - Mention RGE: ${conf.rge || 'Non applicable'}`;
+                    // Legal Footer
+                    document.getElementById('print-legal-footer').innerText = `Assurance Décennale: ${conf.decennale || 'Non renseignée'} - Mention RGE: ${conf.rge || 'Non applicable'}`;
 
-                // LOGO
-                const logoImg = document.getElementById('print-logo');
-                if (conf.logo) {
-                    logoImg.src = conf.logo;
-                    logoImg.classList.remove('hidden');
-                } else {
-                    logoImg.classList.add('hidden');
+                    // LOGO
+                    const logoImg = document.getElementById('print-logo');
+                    if (conf.logo) {
+                        logoImg.src = conf.logo;
+                        logoImg.classList.remove('hidden');
+                    } else {
+                        logoImg.classList.add('hidden');
+                    }
+
+                    // SIGNATURE IN PRINT
+                    const sigData = window.signatureManager.currentSignatureData;
+                    const sigImgPrint = document.getElementById('print-signature-img');
+                    const sigDatePrint = document.getElementById('print-signature-date');
+
+                    if (sigData) {
+                        sigImgPrint.src = sigData;
+                        sigImgPrint.classList.remove('hidden');
+                        sigDatePrint.innerText = "Signé numériquement le " + new Date().toLocaleDateString();
+                        sigDatePrint.classList.remove('hidden');
+                    } else {
+                        sigImgPrint.classList.add('hidden');
+                        sigDatePrint.classList.add('hidden');
+                    }
+
+                    // Lines
+                    const tbody = document.getElementById('print-lines');
+                    tbody.innerHTML = '';
+                    this.lines.forEach(l => {
+                        const tvaPct = (l.tva * 100).toFixed(1) + '%';
+                        tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="py-3 px-4">${l.d}</td><td class="text-center">${l.q}</td><td class="text-center text-xs text-slate-500">${tvaPct}</td><td class="text-right">${l.p}€</td><td class="text-right font-bold">${(l.q * l.p).toFixed(2)}€</td></tr>`;
+                    });
+
+                    document.getElementById('print-ht').innerText = document.getElementById('editor-total-ht').innerText;
+                    document.getElementById('print-tva').innerText = document.getElementById('editor-total-tva').innerText;
+                    document.getElementById('print-ttc').innerText = document.getElementById('editor-total-ttc').innerText;
+
+                    window.print();
+                } catch (e) {
+                    console.error("Print Error:", e);
+                    alert("Erreur lors de l'impression: " + e.message);
                 }
-
-                // SIGNATURE IN PRINT
-                const sigData = window.signatureManager.currentSignatureData;
-                const sigImgPrint = document.getElementById('print-signature-img');
-                const sigDatePrint = document.getElementById('print-signature-date');
-
-                if (sigData) {
-                    sigImgPrint.src = sigData;
-                    sigImgPrint.classList.remove('hidden');
-                    sigDatePrint.innerText = "Signé numériquement le " + new Date().toLocaleDateString();
-                    sigDatePrint.classList.remove('hidden');
-                } else {
-                    sigImgPrint.classList.add('hidden');
-                    sigDatePrint.classList.add('hidden');
-                }
-
-                // Lines
-                const tbody = document.getElementById('print-lines');
-                tbody.innerHTML = '';
-                this.lines.forEach(l => {
-                    const tvaPct = (l.tva * 100).toFixed(1) + '%';
-                    tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="py-3 px-4">${l.d}</td><td class="text-center">${l.q}</td><td class="text-center text-xs text-slate-500">${tvaPct}</td><td class="text-right">${l.p}€</td><td class="text-right font-bold">${(l.q * l.p).toFixed(2)}€</td></tr>`;
-                });
-
-                document.getElementById('print-ht').innerText = document.getElementById('editor-total-ht').innerText;
-                document.getElementById('print-tva').innerText = document.getElementById('editor-total-tva').innerText;
-                document.getElementById('print-ttc').innerText = document.getElementById('editor-total-ttc').innerText;
-
-                window.print();
             }
         };
 
