@@ -976,40 +976,7 @@
         </div>
     </div>
 
-    <script>
-        // ON-SCREEN DEBUGGER
-        window.debugLogs = [];
-        const originalLog = console.log;
-        const originalError = console.error;
 
-        function addLog(type, args) {
-            const msg = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
-            window.debugLogs.push(`[${type}] ${msg}`);
-            if (window.debugLogs.length > 50) window.debugLogs.shift();
-            const el = document.getElementById('debug-content');
-            if (el) el.innerHTML = window.debugLogs.join('<br>');
-        }
-
-        console.log = function (...args) { addLog('LOG', args); originalLog.apply(console, args); };
-        console.error = function (...args) { addLog('ERR', args); originalError.apply(console, args); };
-        window.onerror = function (msg, url, line) { console.error(`Global Error: ${msg} at ${line}`); };
-
-        function toggleDebug() {
-            const d = document.getElementById('debug-panel');
-            d.classList.toggle('hidden');
-            document.getElementById('debug-content').innerHTML = window.debugLogs.join('<br>');
-        }
-    </script>
-    <div id="debug-panel"
-        class="fixed top-0 right-0 w-1/2 h-1/2 bg-black/90 text-green-400 p-4 z-[9999] hidden overflow-auto font-mono text-xs">
-        <div class="flex justify-between mb-2">
-            <span class="font-bold">DEBUG CONSOLE</span>
-            <button onclick="toggleDebug()" class="text-white">X</button>
-        </div>
-        <div id="debug-content"></div>
-    </div>
-    <button onclick="toggleDebug()"
-        class="fixed bottom-0 right-0 bg-red-600 text-white px-2 py-1 text-xs z-[9999] opacity-50 hover:opacity-100">DEBUG</button>
 
     <!-- LOGIC -->
     <script type="module">
