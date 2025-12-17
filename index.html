@@ -267,7 +267,12 @@
                 <span class="text-lg">Connexion Google</span>
             </button>
 
-            <!-- BOUTON DEMO REMOVED -->
+            <!-- BOUTON DEMO (NOUVEAU) -->
+            <button onclick="authManager.loginDemo()"
+                class="btn-action w-full bg-brand-600/10 border border-brand-500/30 text-brand-600 dark:text-brand-400 font-bold py-3 px-6 rounded-2xl flex items-center justify-center gap-2 hover:bg-brand-600/20">
+                <i class="fa-solid fa-gamepad"></i>
+                <span>Accès Démo (Sans Compte)</span>
+            </button>
 
             <div id="login-error" class="text-red-500 text-xs mt-4 hidden bg-red-100 p-2 rounded-lg"></div>
             <p class="text-[10px] text-slate-400 mt-8 uppercase tracking-widest">Sécurisé par Firebase Google</p>
