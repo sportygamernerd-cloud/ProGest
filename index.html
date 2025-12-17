@@ -1145,6 +1145,7 @@
                     } catch (e) {
                         console.error("Firestore Get Error:", e);
                         this._online(false);
+                        // Fallback to local
                     }
                 }
                 return this._getLocal(c);
@@ -1165,6 +1166,7 @@
                         console.error("Firestore Add Error:", e);
                         alert(`Erreur sauvegarde Cloud: ${e.message}. Sauvegarde locale...`);
                         this._online(false);
+                        // Fallback to local execution below
                     }
                 }
                 const i = this._getLocal(c);
@@ -1175,7 +1177,17 @@
                 return d;
             },
             async delete(c, id) {
-                if (db && !id.startsWith('loc_') && this.userId && !this.userId.startsWith('demo_')) { try { await deleteDoc(doc(db, c, id)); this._online(true); return; } catch { } }
+                if (db && !id.startsWith('loc_') && this.userId && !this.userId.startsWith('demo_')) {
+                    try {
+                        await deleteDoc(doc(db, c, id));
+                        this._online(true);
+                        return;
+                    } catch (e) {
+                        console.error("Firestore Delete Error:", e);
+                        this._online(false);
+                        // Fallback to local
+                    }
+                }
                 this._saveLocal(c, this._getLocal(c).filter(x => x.id !== id));
             },
             async saveSettings(d) { this._saveLocal('settings', [d]); if (db && this.userId && !this.userId.startsWith('demo_')) try { await this.add('settings', d); } catch { } },
