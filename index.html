@@ -1205,8 +1205,18 @@
                 return false;
             },
             upgrade() {
+                if (this.STRIPE_LINK.includes('PLACEHOLDER')) {
+                    alert("⚠️ ATTENTION : Le lien de paiement n'est pas encore configuré.\n\nDemandez à vos parents de créer un lien Stripe et de le coller dans le code à la place de 'PLACEHOLDER'.");
+                    return;
+                }
+
                 // 1. Open Payment Page
-                window.open(this.STRIPE_LINK, '_blank');
+                const newWindow = window.open(this.STRIPE_LINK, '_blank');
+
+                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                    alert("⚠️ Le navigateur a bloqué l'ouverture de la page de paiement.\n\nVeuillez autoriser les pop-ups pour ce site.");
+                    return;
+                }
 
                 // 2. Simulate success (waiting for real backend)
                 if (confirm("Avez-vous effectué le paiement sur la page qui vient de s'ouvrir ?")) {
