@@ -1826,20 +1826,26 @@
                 document.getElementById('signature-preview-img').src = '';
             },
 
-            renderLines() {
-                const e = document.getElementById('editor-lines');
-                e.innerHTML = '';
+            updateTotals() {
                 let ht = 0, tvaTotal = 0;
-                this.lines.forEach((l, i) => {
+                this.lines.forEach(l => {
                     ht += l.q * l.p;
                     tvaTotal += (l.q * l.p) * l.tva;
-                    e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2"><button onclick="editorManager.removeLine(${i})" class="text-red-500 px-2"><i class="fa-solid fa-times"></i></button><input class="flex-1 min-w-[150px] bg-transparent outline-none dark:text-white text-slate-900 placeholder-slate-400 font-medium" value="${l.d}" oninput="editorManager.up(${i},'d',this.value)" placeholder="Prestation"><input class="w-14 text-center bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.q}" oninput="editorManager.up(${i},'q',this.value)"><input class="w-20 text-right bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.p}" oninput="editorManager.up(${i},'p',this.value)"><select class="w-16 bg-slate-100 dark:bg-slate-800 rounded p-1 text-xs dark:text-white" onchange="editorManager.up(${i},'tva',this.value)"><option value="0.2" ${l.tva == 0.2 ? 'selected' : ''}>20%</option><option value="0.1" ${l.tva == 0.1 ? 'selected' : ''}>10%</option><option value="0.055" ${l.tva == 0.055 ? 'selected' : ''}>5.5%</option></select></div>`;
                 });
                 document.getElementById('editor-total-ht').innerText = ht.toFixed(2) + '€';
                 document.getElementById('editor-total-tva').innerText = tvaTotal.toFixed(2) + '€';
                 document.getElementById('editor-total-ttc').innerText = (ht + tvaTotal).toFixed(2) + '€';
             },
-            up(i, k, v) { this.lines[i][k] = k === 'd' ? v : parseFloat(v) || 0; this.renderLines(); },
+
+            renderLines() {
+                const e = document.getElementById('editor-lines');
+                e.innerHTML = '';
+                this.lines.forEach((l, i) => {
+                    e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2"><button onclick="editorManager.removeLine(${i})" class="text-red-500 px-2"><i class="fa-solid fa-times"></i></button><input class="flex-1 min-w-[150px] bg-transparent outline-none dark:text-white text-slate-900 placeholder-slate-400 font-medium" value="${DataService.escapeHtml(l.d)}" oninput="editorManager.up(${i},'d',this.value)" placeholder="Prestation"><input class="w-14 text-center bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.q}" oninput="editorManager.up(${i},'q',this.value)"><input class="w-20 text-right bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.p}" oninput="editorManager.up(${i},'p',this.value)"><select class="w-16 bg-slate-100 dark:bg-slate-800 rounded p-1 text-xs dark:text-white" onchange="editorManager.up(${i},'tva',this.value)"><option value="0.2" ${l.tva == 0.2 ? 'selected' : ''}>20%</option><option value="0.1" ${l.tva == 0.1 ? 'selected' : ''}>10%</option><option value="0.055" ${l.tva == 0.055 ? 'selected' : ''}>5.5%</option></select></div>`;
+                });
+                this.updateTotals();
+            },
+            up(i, k, v) { this.lines[i][k] = k === 'd' ? v : parseFloat(v) || 0; this.updateTotals(); },
             addLine() { this.lines.push({ d: '', q: 1, p: 0, tva: 0.2 }); this.renderLines(); },
             removeLine(i) { if (this.lines.length > 1) { this.lines.splice(i, 1); this.renderLines(); } },
             async saveDocument() {
