@@ -1599,7 +1599,6 @@
         // --- 7. CORE MANAGERS ---
         window.router = {
             navigate: (id) => {
-                // Menu removed
 
                 document.querySelectorAll('.view-section').forEach(e => { if (e.id !== 'view-login') { e.classList.remove('active'); e.classList.add('hidden'); } });
                 const target = document.getElementById('view-' + id);
@@ -1859,7 +1858,6 @@
             importItem(t, p) { this.lines.push({ d: t, q: 1, p, tva: 0.2 }); this.renderLines(); window.uiManager.closeGenericModal(); },
 
             // PRINT LOGIC (UPDATED WITH LEGAL, VAT & SIGNATURE)
-            // PRINT LOGIC (UPDATED WITH LEGAL, VAT & SIGNATURE)
             async print() {
                 try {
                     const client = document.getElementById('editor-client-preview').innerText;
@@ -2113,8 +2111,6 @@
         };
         const uiManager = { openGenericModal(t, c) { const m = document.getElementById('modal-generic'); m.innerHTML = `<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`; m.classList.remove('hidden'); }, closeGenericModal() { document.getElementById('modal-generic').classList.add('hidden'); } };
         const themeManager = { toggle: () => { document.documentElement.classList.toggle('dark'); } };
-        // menuManager removed
-
         // INIT
         if (!auth) {
             console.warn("Firebase Auth non disponible. Mode hors ligne/démo uniquement.");
@@ -2129,7 +2125,6 @@
         window.aiManager = aiManager; window.siteManager = siteManager;
         window.uiManager = uiManager; window.themeManager = themeManager;
 
-        // Alert removed
         console.log("Modules attached to window");
 
         // --- AUTH STATE LISTENER (MOVED TO END) ---
