@@ -476,7 +476,13 @@
                 <i class="fa-brands fa-linkedin hover:text-brand-600 cursor-pointer transition-colors"></i>
                 <i class="fa-brands fa-facebook hover:text-brand-600 cursor-pointer transition-colors"></i>
             </div>
-            <div class="mt-8 text-xs text-slate-300">© 2025 GoChantier. Tous droits réservés. v2.0</div>
+            <div class="mt-8 text-xs text-slate-300">
+                © 2025 GoChantier. Tous droits réservés. v2.0 <br>
+                <a href="#" onclick="uiManager.openLegalModal('mentions')"
+                    class="hover:text-brand-500 underline">Mentions Légales</a> -
+                <a href="#" onclick="uiManager.openLegalModal('cgu')" class="hover:text-brand-500 underline">CGU &
+                    Confidentialité</a>
+            </div>
         </div>
 
         <div id="login-error"
@@ -2109,7 +2115,21 @@
                 b.innerHTML = 'Générer';
             }
         };
-        const uiManager = { openGenericModal(t, c) { const m = document.getElementById('modal-generic'); m.innerHTML = `<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`; m.classList.remove('hidden'); }, closeGenericModal() { document.getElementById('modal-generic').classList.add('hidden'); } };
+        const uiManager = {
+            openGenericModal(t, c) { const m = document.getElementById('modal-generic'); m.innerHTML = `<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`; m.classList.remove('hidden'); },
+            closeGenericModal() { document.getElementById('modal-generic').classList.add('hidden'); },
+            openLegalModal(type) {
+                let title = "", content = "";
+                if (type === 'mentions') {
+                    title = "Mentions Légales";
+                    content = `<p class="text-sm text-slate-600 dark:text-slate-300 mb-2"><strong>Éditeur :</strong> [VOTRE NOM OU SOCIÉTÉ]<br><strong>Adresse :</strong> [VOTRE ADRESSE]<br><strong>Contact :</strong> [VOTRE EMAIL]</p><p class="text-sm text-slate-600 dark:text-slate-300">Hébergé par Vercel Inc.</p>`;
+                } else {
+                    title = "CGU & Confidentialité";
+                    content = `<p class="text-sm text-slate-600 dark:text-slate-300 mb-2"><strong>Données :</strong> Les données collectées (clients, devis) sont stockées de manière sécurisée sur Google Firebase. Elles ne sont ni vendues ni partagées.</p><p class="text-sm text-slate-600 dark:text-slate-300"><strong>Responsabilité :</strong> GoChantier n'est pas responsable des erreurs dans vos devis.</p>`;
+                }
+                this.openGenericModal(title, content);
+            }
+        };
         const themeManager = { toggle: () => { document.documentElement.classList.toggle('dark'); } };
         // INIT
         if (!auth) {
