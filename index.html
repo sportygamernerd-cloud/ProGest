@@ -1363,36 +1363,21 @@
                 // Mobile badge removed
             },
 
-            // PREMIUM LOGIC
-            STRIPE_LINK: 'https://buy.stripe.com/PLACEHOLDER', // ⚠️ DEMANDE À TES PARENTS DE METTRE LEUR LIEN ICI
+            // PREMIUM LOGIC (BETA GRATUITE)
+            STRIPE_LINK: '#',
 
             checkPremium() {
-                if (this.isPremium) return true;
-                document.getElementById('modal-premium').classList.remove('hidden');
-                return false;
+                // BETA MODE: Tout est gratuit pour l'instant
+                return true;
             },
             upgrade() {
-                if (this.STRIPE_LINK.includes('PLACEHOLDER')) {
-                    alert("⚠️ ATTENTION : Le lien de paiement n'est pas encore configuré.\n\nDemandez à vos parents de créer un lien Stripe et de le coller dans le code à la place de 'PLACEHOLDER'.");
-                    return;
-                }
+                // Simulation d'upgrade pour la beta
+                this.isPremium = true;
+                alert("🎉 Bienvenue dans la Beta ! Vous avez accès à toutes les fonctionnalités Premium gratuitement.");
+                document.getElementById('modal-premium').classList.add('hidden');
 
-                // 1. Open Payment Page
-                const newWindow = window.open(this.STRIPE_LINK, '_blank');
-
-                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-                    alert("⚠️ Le navigateur a bloqué l'ouverture de la page de paiement.\n\nVeuillez autoriser les pop-ups pour ce site.");
-                    return;
-                }
-
-                // 2. Simulate success (waiting for real backend)
-                if (confirm("Avez-vous effectué le paiement sur la page qui vient de s'ouvrir ?")) {
-                    this.isPremium = true;
-                    localStorage.setItem('pg_premium', 'true');
-                    document.getElementById('modal-premium').classList.add('hidden');
-                    alert("Félicitations ! Vous êtes maintenant Premium 👑");
-                    window.location.reload();
-                }
+                // Save premium state locally for persistence during session
+                localStorage.setItem('pg_premium', 'true');
             },
             initPremium() {
                 this.isPremium = localStorage.getItem('pg_premium') === 'true';
