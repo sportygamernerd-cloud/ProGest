@@ -246,9 +246,7 @@
     <!-- HAMBURGER REMOVED -->
 
     <!-- RIGHT DRAWER MENU -->
-    <div id="menu-overlay" onclick="menuManager.close()"
-        class="fixed inset-0 bg-black/50 z-[60] hidden transition-opacity duration-300 opacity-0 backdrop-blur-sm">
-    </div>
+    <!-- MENU OVERLAY REMOVED -->
 
     <!-- DRAWER MENU REMOVED -->
 
@@ -973,23 +971,90 @@
         class="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-slate-200/50 dark:border-slate-700/50 flex justify-around p-3 pb-safe z-40 shadow-2xl">
         <button onclick="router.navigate('home')"
             class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="home"><i
-                class="fa-solid fa-house mb-1 text-lg"></i><span
-                class="text-[10px] font-bold">Accueil</span></button><button onclick="router.navigate('sites')"
-            class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="sites"><i
-                class="fa-solid fa-hard-hat mb-1 text-lg"></i><span
-                class="text-[10px] font-bold">Chantier</span></button><button onclick="router.navigate('devis')"
-            class="p-2 -mt-10">
+                class="fa-solid fa-house mb-1 text-lg"></i><span class="text-[10px] font-bold">Accueil</span></button>
+        <button onclick="router.navigate('calendar')"
+            class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all"
+            data-target="calendar"><i class="fa-solid fa-calendar mb-1 text-lg"></i><span
+                class="text-[10px] font-bold">Agenda</span></button>
+        <button onclick="router.navigate('devis')" class="p-2 -mt-10">
             <div
                 class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-brand-500/40 hover:scale-110 transition-all">
                 <i class="fa-solid fa-plus text-2xl"></i>
             </div>
-        </button><button onclick="router.navigate('clients')"
-            class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="clients"><i
-                class="fa-solid fa-users mb-1 text-lg"></i><span
-                class="text-[10px] font-bold">Clients</span></button><button onclick="router.navigate('settings')"
-            class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all"
-            data-target="settings"><i class="fa-solid fa-cog mb-1 text-lg"></i><span
-                class="text-[10px] font-bold">Réglages</span></button>
+        </button>
+        <button onclick="router.navigate('sites')"
+            class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all" data-target="sites"><i
+                class="fa-solid fa-hard-hat mb-1 text-lg"></i><span
+                class="text-[10px] font-bold">Chantier</span></button>
+        <button onclick="document.getElementById('modal-mobile-menu').classList.remove('hidden')"
+            class="p-2 flex flex-col items-center text-slate-400 nav-btn-mobile transition-all"><i
+                class="fa-solid fa-bars mb-1 text-lg"></i><span class="text-[10px] font-bold">Menu</span></button>
+    </div>
+
+    <!-- MOBILE MENU BOTTOM SHEET -->
+    <div id="modal-mobile-menu"
+        class="fixed inset-0 z-[100] hidden bg-black/50 backdrop-blur-sm flex flex-col justify-end animate-fade-in"
+        onclick="if(event.target === this) this.classList.add('hidden')">
+        <div class="bg-white dark:bg-slate-900 rounded-t-3xl p-6 animate-slide-up">
+            <div class="flex justify-center mb-6">
+                <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-4 mb-8">
+                <button
+                    onclick="router.navigate('clients');document.getElementById('modal-mobile-menu').classList.add('hidden')"
+                    class="flex flex-col items-center gap-2">
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <span class="text-xs font-bold dark:text-slate-300">Clients</span>
+                </button>
+                <button
+                    onclick="router.navigate('items');document.getElementById('modal-mobile-menu').classList.add('hidden')"
+                    class="flex flex-col items-center gap-2">
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 text-xl">
+                        <i class="fa-solid fa-box"></i>
+                    </div>
+                    <span class="text-xs font-bold dark:text-slate-300">Articles</span>
+                </button>
+                <button
+                    onclick="router.navigate('expenses');document.getElementById('modal-mobile-menu').classList.add('hidden')"
+                    class="flex flex-col items-center gap-2">
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 text-xl">
+                        <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <span class="text-xs font-bold dark:text-slate-300">Dépenses</span>
+                </button>
+                <button
+                    onclick="router.navigate('deals');document.getElementById('modal-mobile-menu').classList.add('hidden')"
+                    class="flex flex-col items-center gap-2">
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 text-xl">
+                        <i class="fa-solid fa-tags"></i>
+                    </div>
+                    <span class="text-xs font-bold dark:text-slate-300">Bons Plans</span>
+                </button>
+            </div>
+
+            <div class="space-y-2">
+                <button
+                    onclick="router.navigate('settings');document.getElementById('modal-mobile-menu').classList.add('hidden')"
+                    class="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center gap-4 font-bold text-slate-700 dark:text-slate-300">
+                    <i class="fa-solid fa-cog text-slate-400"></i> Réglages
+                </button>
+                <button onclick="themeManager.toggle()"
+                    class="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center gap-4 font-bold text-slate-700 dark:text-slate-300">
+                    <i class="fa-solid fa-moon text-slate-400"></i> Mode Sombre
+                </button>
+                <button onclick="authManager.logout()"
+                    class="w-full p-4 rounded-xl bg-red-50 text-red-500 flex items-center gap-4 font-bold">
+                    <i class="fa-solid fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- MODALS -->
