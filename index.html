@@ -338,7 +338,17 @@
                             d'affaires. Sachez exactement combien vous gagnez sur chaque chantier.</p>
                     </div>
 
-                    <!-- Feature 3 REMOVED -->
+                    <!-- Feature 3 -->
+                    <div
+                        class="p-8 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 hover:border-brand-500/30 transition-colors group">
+                        <div
+                            class="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 text-2xl mb-6 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-camera"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-3">Suivi de Chantier</h3>
+                        <p class="text-slate-500 dark:text-slate-400">Prenez des photos, ajoutez des notes et suivez
+                            l'avancement de vos chantiers directement depuis votre mobile.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -379,10 +389,30 @@
                     </div>
                     <div class="bg-white/5 backdrop-blur-lg rounded-3xl p-8 border border-white/10">
                         <div class="text-center mb-8">
-                            <div class="text-sm text-slate-400 uppercase tracking-widest mb-2">Économies estimées</div>
-                            <div class="text-5xl font-black text-green-400">4 800€ <span
-                                    class="text-xl text-white">/an</span></div>
-                            <div class="text-slate-400 mt-2">En temps gagné et opportunités saisies</div>
+                            <div class="text-sm text-slate-400 uppercase tracking-widest mb-6">Économies Potentielles
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                                    <div class="text-xs text-slate-400 mb-1">Par Jour</div>
+                                    <div class="text-2xl font-black text-green-400">45€</div>
+                                </div>
+                                <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                                    <div class="text-xs text-slate-400 mb-1">Par Semaine</div>
+                                    <div class="text-2xl font-black text-green-400">225€</div>
+                                </div>
+                                <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                                    <div class="text-xs text-slate-400 mb-1">Par Mois</div>
+                                    <div class="text-2xl font-black text-green-400">900€</div>
+                                </div>
+                                <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                                    <div class="text-xs text-slate-400 mb-1">Par An</div>
+                                    <div class="text-2xl font-black text-green-400">10 800€</div>
+                                </div>
+                            </div>
+
+                            <div class="text-slate-400 mt-2 text-sm">Basé sur un gain de temps moyen et l'augmentation
+                                du taux de signature.</div>
                         </div>
                         <button onclick="authManager.login()"
                             class="w-full py-4 bg-white text-slate-900 font-black rounded-xl hover:bg-brand-50 transition-colors text-lg">
