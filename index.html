@@ -1080,6 +1080,10 @@
             </div>
 
             <div class="space-y-2">
+                <button id="btn-install-app" onclick="pwaManager.install()"
+                    class="hidden w-full p-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white flex items-center gap-4 font-bold shadow-lg mb-4">
+                    <i class="fa-solid fa-download"></i> Installer l'Application
+                </button>
                 <button
                     onclick="router.navigate('settings');document.getElementById('modal-mobile-menu').classList.add('hidden')"
                     class="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center gap-4 font-bold text-slate-700 dark:text-slate-300">
@@ -2475,6 +2479,44 @@
                 }
             });
         }
+
+        // PWA MANAGER
+        const pwaManager = {
+            deferredPrompt: null,
+            init() {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    this.deferredPrompt = e;
+                    const btn = document.getElementById('btn-install-app');
+                    if (btn) btn.classList.remove('hidden');
+                });
+
+                window.addEventListener('appinstalled', () => {
+                    this.deferredPrompt = null;
+                    const btn = document.getElementById('btn-install-app');
+                    if (btn) btn.classList.add('hidden');
+                    console.log('PWA was installed');
+                });
+            },
+            async install() {
+                if (this.deferredPrompt) {
+                    this.deferredPrompt.prompt();
+                    const { outcome } = await this.deferredPrompt.userChoice;
+                    console.log(`User response to the install prompt: ${outcome}`);
+                    this.deferredPrompt = null;
+                    document.getElementById('btn-install-app').classList.add('hidden');
+                } else {
+                    // Fallback for iOS or if prompt not available
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                    if (isIOS) {
+                        alert("Pour installer l'application sur iOS :\n1. Appuyez sur le bouton 'Partager' (carré avec flèche)\n2. Sélectionnez 'Sur l'écran d'accueil'");
+                    } else {
+                        alert("Pour installer, utilisez le menu de votre navigateur et choisissez 'Installer l'application' ou 'Ajouter à l'écran d'accueil'.");
+                    }
+                }
+            }
+        };
+        pwaManager.init();
 
         // PWA SERVICE WORKER REGISTRATION
         if ('serviceWorker' in navigator) {
