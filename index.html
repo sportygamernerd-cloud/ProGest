@@ -475,28 +475,23 @@
     <aside id="sidebar"
         class="w-64 bg-white dark:bg-[#0f172a] border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all duration-300 z-20 hidden md:flex">
         <div class="p-6 flex items-center gap-3">
-            <span class="font-black text-xl tracking-tight dark:text-white">GoChantier<span
-                    class="text-brand-600">.</span></span>
+            <span class="font-black text-xl tracking-tight dark:text-white">GoChantier <span
+                    class="text-purple-600">IA</span></span>
             <span id="badge-status-desktop"
                 class="ml-auto text-[10px] font-bold bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full text-green-700 dark:text-green-400 flex items-center gap-1">ONLINE</span>
         </div>
         <nav class="flex-1 px-4 space-y-1">
+            <a onclick="router.navigate('devis'); setTimeout(() => document.getElementById('btn-smart-mic').scrollIntoView({behavior: 'smooth'}), 500)"
+                id="nav-ai"
+                class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-white bg-gradient-to-r from-purple-600 to-purple-500 shadow-lg shadow-purple-500/30 hover:scale-[1.02] transition-all cursor-pointer mb-4">
+                <i class="fa-solid fa-wand-magic-sparkles w-5"></i>
+                <span class="flex-1 font-bold">IA Chantier</span>
+                <span class="bg-white text-purple-600 text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
+            </a>
+
             <a onclick="router.navigate('home')" id="nav-home"
                 class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
                     class="fa-solid fa-home w-5"></i> Tableau de bord</a>
-            <a onclick="router.navigate('devis')" id="nav-devis"
-                class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
-                    class="fa-solid fa-pen-nib w-5"></i> Devis</a>
-            <a onclick="router.navigate('calendar')" id="nav-calendar"
-                class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"><i
-                    class="fa-solid fa-calendar w-5"></i> Agenda</a>
-            <a onclick="router.navigate('devis'); setTimeout(() => document.getElementById('btn-smart-mic').scrollIntoView({behavior: 'smooth'}), 500)"
-                id="nav-ai"
-                class="nav-item flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors cursor-pointer">
-                <i class="fa-solid fa-wand-magic-sparkles w-5"></i>
-                <span class="flex-1">IA Chantier</span>
-                <span class="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">NEW</span>
-            </a>
 
             <!-- DROPDOWN GESTION -->
             <div>
@@ -2634,8 +2629,31 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registered', reg))
+                    .then(reg => {
+                        console.log('SW registered', reg);
+                        reg.onupdatefound = () => {
+                            const installingWorker = reg.installing;
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed') {
+                                    if (navigator.serviceWorker.controller) {
+                                        // New update available
+                                        console.log('New content is available; please refresh.');
+                                        if (confirm("Une nouvelle version de GoChantier est disponible ! Cliquez sur OK pour mettre à jour.")) {
+                                            window.location.reload();
+                                        }
+                                    } else {
+                                        console.log('Content is cached for offline use.');
+                                    }
+                                }
+                            };
+                        };
+                    })
                     .catch(err => console.log('SW failed', err));
+
+                // Force reload if controller changes
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                });
             });
         }
     </script>
