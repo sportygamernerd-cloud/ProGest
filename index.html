@@ -1950,38 +1950,50 @@
             },
 
             // SMART DICTATION (GLOBAL)
+            recognition: null,
+            isRecording: false,
+            originalBtnContent: null, // Added to store original button content
+
             startSmartDictation() {
                 if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return alert("Navigateur non compatible");
 
+                // STOP IF RECORDING
+                if (this.isRecording && this.recognition) {
+                    this.recognition.stop();
+                    this.isRecording = false; // Set to false immediately
+                    return;
+                }
+
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'fr-FR';
-                recognition.interimResults = false;
+                this.recognition = new SpeechRecognition();
+                this.recognition.lang = 'fr-FR';
+                this.recognition.interimResults = false;
 
                 const btn = document.getElementById('btn-smart-mic');
-                const originalContent = btn.innerHTML;
+                // Store original content only if not already recording (to avoid overwriting with "Appuyez pour arrêter")
+                if (!this.originalBtnContent) this.originalBtnContent = btn.innerHTML;
 
                 btn.classList.remove('from-brand-600', 'to-brand-500');
-                btn.classList.add('animate-pulse', 'bg-red-500'); // Simple red bg for recording
-                btn.innerHTML = '<i class="fa-solid fa-microphone-lines text-4xl animate-bounce"></i><span class="font-bold mt-2">Je vous écoute...</span>';
+                btn.classList.add('animate-pulse', 'bg-red-500');
+                btn.innerHTML = '<i class="fa-solid fa-microphone-lines text-4xl animate-bounce"></i><span class="font-bold mt-2">Appuyez pour arrêter</span>';
 
-                recognition.start();
+                this.isRecording = true;
+                this.recognition.start();
 
-                recognition.onresult = (e) => {
+                this.recognition.onresult = (e) => {
                     const text = e.results[0][0].transcript;
                     this.analyzeAndAdd(text);
                 };
 
-                recognition.onend = () => {
+                this.recognition.onend = () => {
+                    this.isRecording = false;
                     btn.classList.remove('animate-pulse', 'bg-red-500');
                     btn.classList.add('from-brand-600', 'to-brand-500');
-                    btn.innerHTML = originalContent;
+                    btn.innerHTML = this.originalBtnContent;
                 };
 
-                recognition.onerror = (e) => {
+                this.recognition.onerror = (e) => {
                     console.error(e);
-                    btn.classList.remove('animate-pulse', 'bg-red-500');
-                    btn.classList.add('from-brand-600', 'to-brand-500');
                     btn.innerHTML = originalContent;
                     alert("Erreur: " + e.error);
                 };
