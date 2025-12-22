@@ -549,6 +549,30 @@
                         class="fa-solid fa-sun hidden dark:inline"></i></button>
             </div>
 
+            <!-- SAVINGS BANNER -->
+            <div
+                class="mb-8 bg-gradient-to-r from-green-600 to-emerald-800 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+                <div
+                    class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl">
+                </div>
+                <div class="relative z-10">
+                    <div class="text-green-100 text-xs font-bold uppercase tracking-wider mb-1">Gain estimé avec
+                        GoChantier</div>
+                    <div class="text-3xl md:text-4xl font-black flex items-baseline gap-2">
+                        <span id="stat-savings">1 250 €</span>
+                        <span class="text-sm font-normal text-green-200">cette année</span>
+                    </div>
+                    <p class="text-green-100 text-sm mt-2 max-w-md">Basé sur le temps gagné en administratif et les
+                        devis mieux relancés.</p>
+                </div>
+                <div class="relative z-10">
+                    <button onclick="router.navigate('devis')"
+                        class="bg-white text-green-700 px-6 py-3 rounded-xl font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2">
+                        <i class="fa-solid fa-rocket"></i> Augmenter mes gains
+                    </button>
+                </div>
+            </div>
+
             <!-- STATS GRID -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div class="glass p-5 rounded-2xl shadow-sm card-hover border border-slate-200 dark:border-slate-700">
