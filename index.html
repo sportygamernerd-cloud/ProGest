@@ -1407,6 +1407,45 @@
             },
             initPremium() {
                 this.isPremium = localStorage.getItem('pg_premium') === 'true';
+            },
+
+            // SAVINGS CALCULATOR (ALGO "REALISTE")
+            async calculateSavings() {
+                // 1. Base (Inscription) = 45€ (1h de gagnée direct)
+                let total = 45;
+
+                // 2. Count Documents (Local + Cloud if possible, but let's use what we have in memory or fetch count)
+                // For simplicity and speed, we'll track "actions" in localStorage counters
+                const quoteCount = parseInt(localStorage.getItem('pg_count_quotes') || '0');
+                const invoiceCount = parseInt(localStorage.getItem('pg_count_invoices') || '0');
+                const siteCount = parseInt(localStorage.getItem('pg_count_sites') || '0');
+
+                // 3. Apply Formula
+                // - 1 Devis = 20 mins gagnées = ~15€
+                // - 1 Facture = 15 mins gagnées = ~10€
+                // - 1 Chantier suivi = 5€/jour (on simplifie à 5€ par chantier créé pour l'instant)
+                total += (quoteCount * 15);
+                total += (invoiceCount * 10);
+                total += (siteCount * 5);
+
+                // 4. Update UI
+                const el = document.getElementById('stat-savings');
+                if (el) {
+                    // Animation effect
+                    const currentVal = parseInt(el.innerText.replace(/\D/g, '')) || 0;
+                    if (currentVal !== total) {
+                        el.innerText = total.toLocaleString('fr-FR') + ' €';
+                        el.classList.add('scale-110', 'text-green-300');
+                        setTimeout(() => el.classList.remove('scale-110', 'text-green-300'), 300);
+                    }
+                }
+                return total;
+            },
+            incrementCounter(type) {
+                const key = 'pg_count_' + type;
+                const current = parseInt(localStorage.getItem(key) || '0');
+                localStorage.setItem(key, current + 1);
+                this.calculateSavings(); // Refresh UI immediately
             }
         };
         window.DataService = DataService;
@@ -1911,6 +1950,10 @@
                     ht, ttc: ht + tva, status: sigData ? 'signed' : 'draft',
                     signature: sigData
                 });
+
+                // TRACK SAVINGS
+                DataService.incrementCounter('quotes');
+
                 b.innerHTML = t; b.disabled = false;
                 alert('Sauvegardé !'); router.navigate('home');
             },
