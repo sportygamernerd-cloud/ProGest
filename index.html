@@ -1411,8 +1411,8 @@
 
             // SAVINGS CALCULATOR (ALGO "REALISTE")
             async calculateSavings() {
-                // 1. Base (Inscription) = 45€ (1h de gagnée direct)
-                let total = 45;
+                // 1. Base starts at 0
+                let total = 0;
 
                 // 2. Count Documents (Local + Cloud if possible, but let's use what we have in memory or fetch count)
                 // For simplicity and speed, we'll track "actions" in localStorage counters
