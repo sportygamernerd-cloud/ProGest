@@ -1924,180 +1924,247 @@
                 const e = document.getElementById('editor-lines');
                 e.innerHTML = '';
                 this.lines.forEach((l, i) => {
-                    e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2"><button onclick="editorManager.removeLine(${i})" class="text-red-500 px-2"><i class="fa-solid fa-times"></i></button><input class="flex-1 min-w-[150px] bg-transparent outline-none dark:text-white text-slate-900 placeholder-slate-400 font-medium" value="${DataService.escapeHtml(l.d)}" oninput="editorManager.up(${i},'d',this.value)" placeholder="Prestation"><input class="w-14 text-center bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.q}" oninput="editorManager.up(${i},'q',this.value)"><input class="w-20 text-right bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.p}" oninput="editorManager.up(${i},'p',this.value)"><select class="w-16 bg-slate-100 dark:bg-slate-800 rounded p-1 text-xs dark:text-white" onchange="editorManager.up(${i},'tva',this.value)"><option value="0.2" ${l.tva == 0.2 ? 'selected' : ''}>20%</option><option value="0.1" ${l.tva == 0.1 ? 'selected' : ''}>10%</option><option value="0.055" ${l.tva == 0.055 ? 'selected' : ''}>5.5%</option></select></div>`;
+                    e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2">
+                        <button onclick="editorManager.removeLine(${i})" class="text-red-500 px-2"><i class="fa-solid fa-times"></i></button>
+                        <div class="flex-1 flex items-center gap-2 min-w-[150px] bg-slate-50 dark:bg-slate-800/50 rounded-lg px-2 border border-transparent focus-within:border-brand-500 transition-colors">
+                            <input class="flex-1 bg-transparent outline-none dark:text-white text-slate-900 placeholder-slate-400 font-medium py-2" value="${DataService.escapeHtml(l.d)}" oninput="editorManager.up(${i},'d',this.value)" placeholder="Prestation">
+                            <button onclick="editorManager.startDictation(${i})" class="text-slate-400 hover:text-brand-600 transition-colors p-2"><i class="fa-solid fa-microphone"></i></button>
+                        </div>
+                        <input class="w-14 text-center bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.q}" oninput="editorManager.up(${i},'q',this.value)">
+                        <input class="w-20 text-right bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.p}" oninput="editorManager.up(${i},'p',this.value)">
+                        <select class="w-16 bg-slate-100 dark:bg-slate-800 rounded p-1 text-xs dark:text-white" onchange="editorManager.up(${i},'tva',this.value)"><option value="0.2" ${l.tva == 0.2 ? 'selected' : ''}>20%</option><option value="0.1" ${l.tva == 0.1 ? 'selected' : ''}>10%</option><option value="0.055" ${l.tva == 0.055 ? 'selected' : ''}>5.5%</option></select>
+                    </div>`;
                 });
                 this.updateTotals();
             },
-            up(i, k, v) { this.lines[i][k] = k === 'd' ? v : parseFloat(v) || 0; this.updateTotals(); },
-            addLine() { this.lines.push({ d: '', q: 1, p: 0, tva: 0.2 }); this.renderLines(); },
-            removeLine(i) { if (this.lines.length > 1) { this.lines.splice(i, 1); this.renderLines(); } },
+
+            // VOICE DICTATION
+            startDictation(i) {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    alert("Votre navigateur ne supporte pas la dictée vocale. Essayez Chrome ou Safari.");
+                    return;
+                }
+
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'fr-FR';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                const btn = document.querySelector(`button[onclick="editorManager.startDictation(${i})"]`);
+                const icon = btn.querySelector('i');
+
+                // Visual feedback
+                icon.className = "fa-solid fa-microphone-lines text-red-500 animate-pulse";
+
+                recognition.start();
+
+                recognition.onresult = (event) => {
+                    const text = event.results[0][0].transcript;
+                    console.log('Dictée:', text);
+
+                    // SIMPLE PARSING LOGIC
+                    // Ex: "Peinture salon 500 euros" -> Desc: "Peinture salon", Price: 500
+                    let desc = text;
+                    let price = 0;
+
+                    // Try to find price at the end
+                    const priceMatch = text.match(/(\d+)\s?(euros?|€)/i);
+                    if (priceMatch) {
+                        price = parseFloat(priceMatch[1]);
+                        desc = text.replace(priceMatch[0], '').trim();
+                    }
+
+                    // Update Line
+                    const currentDesc = this.lines[i].d;
+                    this.lines[i].d = currentDesc ? currentDesc + ' ' + desc : desc;
+                    if (price > 0) this.lines[i].p = price;
+
+                    this.renderLines();
+                };
+
+                recognition.onend = () => {
+                    // Reset icon
+                    // Since renderLines is called in onresult, the button is re-rendered, so we don't strictly need to reset class here if successful.
+                    // But if no result (silence), we should reset.
+                    if (icon) icon.className = "fa-solid fa-microphone";
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Speech error', event.error);
+                    alert("Erreur micro : " + event.error);
+                    if (icon) icon.className = "fa-solid fa-microphone";
+                };
+                up(i, k, v) { this.lines[i][k] = k === 'd' ? v : parseFloat(v) || 0; this.updateTotals(); },
+                addLine() { this.lines.push({ d: '', q: 1, p: 0, tva: 0.2 }); this.renderLines(); },
+                removeLine(i) { if (this.lines.length > 1) { this.lines.splice(i, 1); this.renderLines(); } },
             async saveDocument() {
-                const clientName = document.getElementById('editor-client-preview').innerText;
-                if (clientName === "Sélectionner...") return alert('Veuillez sélectionner un client');
+                    const clientName = document.getElementById('editor-client-preview').innerText;
+                    if (clientName === "Sélectionner...") return alert('Veuillez sélectionner un client');
 
-                const b = document.querySelector('button[onclick="editorManager.saveDocument()"]');
-                const t = b.innerHTML; b.innerHTML = '...'; b.disabled = true;
+                    const b = document.querySelector('button[onclick="editorManager.saveDocument()"]');
+                    const t = b.innerHTML; b.innerHTML = '...'; b.disabled = true;
 
-                let ht = 0, tva = 0;
-                this.lines.forEach(l => { ht += l.q * l.p; tva += (l.q * l.p) * l.tva; });
+                    let ht = 0, tva = 0;
+                    this.lines.forEach(l => { ht += l.q * l.p; tva += (l.q * l.p) * l.tva; });
 
-                // Get Signature
-                const sigData = window.signatureManager.currentSignatureData;
+                    // Get Signature
+                    const sigData = window.signatureManager.currentSignatureData;
 
-                await DataService.add('docs', {
-                    type: 'devis', date: new Date().toISOString(),
-                    clientName: clientName, lines: this.lines,
-                    ht, ttc: ht + tva, status: sigData ? 'signed' : 'draft',
-                    signature: sigData
-                });
+                    await DataService.add('docs', {
+                        type: 'devis', date: new Date().toISOString(),
+                        clientName: clientName, lines: this.lines,
+                        ht, ttc: ht + tva, status: sigData ? 'signed' : 'draft',
+                        signature: sigData
+                    });
 
-                // TRACK SAVINGS
-                DataService.incrementCounter('quotes');
+                    // TRACK SAVINGS
+                    DataService.incrementCounter('quotes');
 
-                b.innerHTML = t; b.disabled = false;
-                alert('Sauvegardé !'); router.navigate('home');
-            },
-            openLibraryModal() { window.uiManager.openGenericModal('Bibliothèque', '<div id="modal-lib-list">...</div>'); window.itemManager.render(true); },
-            importItem(t, p) { this.lines.push({ d: t, q: 1, p, tva: 0.2 }); this.renderLines(); window.uiManager.closeGenericModal(); },
+                    b.innerHTML = t; b.disabled = false;
+                    alert('Sauvegardé !'); router.navigate('home');
+                },
+                openLibraryModal() { window.uiManager.openGenericModal('Bibliothèque', '<div id="modal-lib-list">...</div>'); window.itemManager.render(true); },
+                importItem(t, p) { this.lines.push({ d: t, q: 1, p, tva: 0.2 }); this.renderLines(); window.uiManager.closeGenericModal(); },
 
             // PRINT LOGIC (UPDATED WITH LEGAL, VAT & SIGNATURE)
             async print() {
-                try {
-                    const client = document.getElementById('editor-client-preview').innerText;
-                    if (client === "Sélectionner...") return alert("Choisissez un client");
+                    try {
+                        const client = document.getElementById('editor-client-preview').innerText;
+                        if (client === "Sélectionner...") return alert("Choisissez un client");
 
-                    // Get Settings for Logo & Legal
-                    const s = await DataService.get('settings');
-                    const conf = s[0] || {};
+                        // Get Settings for Logo & Legal
+                        const s = await DataService.get('settings');
+                        const conf = s[0] || {};
 
-                    document.getElementById('print-client-name').innerText = client;
-                    document.getElementById('print-date').innerText = new Date().toLocaleDateString();
-                    document.getElementById('print-ref').innerText = 'D-' + Date.now().toString().substr(-4);
+                        document.getElementById('print-client-name').innerText = client;
+                        document.getElementById('print-date').innerText = new Date().toLocaleDateString();
+                        document.getElementById('print-ref').innerText = 'D-' + Date.now().toString().substr(-4);
 
-                    // Legal Info Header
-                    let legal = `${conf.company || 'Mon Entreprise'}\nSIRET: ${conf.siret || 'Non renseigné'}\n${conf.address || ''}\nTVA Intra: ${conf.tvaintra || 'Non renseigné'}`;
-                    document.getElementById('print-company-info').innerText = legal;
+                        // Legal Info Header
+                        let legal = `${conf.company || 'Mon Entreprise'}\nSIRET: ${conf.siret || 'Non renseigné'}\n${conf.address || ''}\nTVA Intra: ${conf.tvaintra || 'Non renseigné'}`;
+                        document.getElementById('print-company-info').innerText = legal;
 
-                    // Legal Footer
-                    document.getElementById('print-legal-footer').innerText = `Assurance Décennale: ${conf.decennale || 'Non renseignée'} - Mention RGE: ${conf.rge || 'Non applicable'}`;
+                        // Legal Footer
+                        document.getElementById('print-legal-footer').innerText = `Assurance Décennale: ${conf.decennale || 'Non renseignée'} - Mention RGE: ${conf.rge || 'Non applicable'}`;
 
-                    // LOGO
-                    const logoImg = document.getElementById('print-logo');
-                    if (conf.logo) {
-                        logoImg.src = conf.logo;
-                        logoImg.classList.remove('hidden');
-                    } else {
-                        logoImg.classList.add('hidden');
+                        // LOGO
+                        const logoImg = document.getElementById('print-logo');
+                        if (conf.logo) {
+                            logoImg.src = conf.logo;
+                            logoImg.classList.remove('hidden');
+                        } else {
+                            logoImg.classList.add('hidden');
+                        }
+
+                        // SIGNATURE IN PRINT
+                        const sigData = window.signatureManager.currentSignatureData;
+                        const sigImgPrint = document.getElementById('print-signature-img');
+                        const sigDatePrint = document.getElementById('print-signature-date');
+
+                        if (sigData) {
+                            sigImgPrint.src = sigData;
+                            sigImgPrint.classList.remove('hidden');
+                            sigDatePrint.innerText = "Signé numériquement le " + new Date().toLocaleDateString();
+                            sigDatePrint.classList.remove('hidden');
+                        } else {
+                            sigImgPrint.classList.add('hidden');
+                            sigDatePrint.classList.add('hidden');
+                        }
+
+                        // Lines
+                        const tbody = document.getElementById('print-lines');
+                        tbody.innerHTML = '';
+                        this.lines.forEach(l => {
+                            const tvaPct = (l.tva * 100).toFixed(1) + '%';
+                            tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="py-3 px-4">${l.d}</td><td class="text-center">${l.q}</td><td class="text-center text-xs text-slate-500">${tvaPct}</td><td class="text-right">${l.p}€</td><td class="text-right font-bold">${(l.q * l.p).toFixed(2)}€</td></tr>`;
+                        });
+
+                        document.getElementById('print-ht').innerText = document.getElementById('editor-total-ht').innerText;
+                        document.getElementById('print-tva').innerText = document.getElementById('editor-total-tva').innerText;
+                        document.getElementById('print-ttc').innerText = document.getElementById('editor-total-ttc').innerText;
+
+                        window.print();
+                    } catch (e) {
+                        console.error("Print Error:", e);
+                        alert("Erreur lors de l'impression: " + e.message);
                     }
-
-                    // SIGNATURE IN PRINT
-                    const sigData = window.signatureManager.currentSignatureData;
-                    const sigImgPrint = document.getElementById('print-signature-img');
-                    const sigDatePrint = document.getElementById('print-signature-date');
-
-                    if (sigData) {
-                        sigImgPrint.src = sigData;
-                        sigImgPrint.classList.remove('hidden');
-                        sigDatePrint.innerText = "Signé numériquement le " + new Date().toLocaleDateString();
-                        sigDatePrint.classList.remove('hidden');
-                    } else {
-                        sigImgPrint.classList.add('hidden');
-                        sigDatePrint.classList.add('hidden');
-                    }
-
-                    // Lines
-                    const tbody = document.getElementById('print-lines');
-                    tbody.innerHTML = '';
-                    this.lines.forEach(l => {
-                        const tvaPct = (l.tva * 100).toFixed(1) + '%';
-                        tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="py-3 px-4">${l.d}</td><td class="text-center">${l.q}</td><td class="text-center text-xs text-slate-500">${tvaPct}</td><td class="text-right">${l.p}€</td><td class="text-right font-bold">${(l.q * l.p).toFixed(2)}€</td></tr>`;
-                    });
-
-                    document.getElementById('print-ht').innerText = document.getElementById('editor-total-ht').innerText;
-                    document.getElementById('print-tva').innerText = document.getElementById('editor-total-tva').innerText;
-                    document.getElementById('print-ttc').innerText = document.getElementById('editor-total-ttc').innerText;
-
-                    window.print();
-                } catch (e) {
-                    console.error("Print Error:", e);
-                    alert("Erreur lors de l'impression: " + e.message);
                 }
-            }
-        };
+            };
 
-        const clientManager = {
-            async render() { const e = document.getElementById('clients-list-body'); const c = await DataService.get('clients'); e.innerHTML = ''; if (c.length === 0) e.innerHTML = '<p class="text-slate-400 p-4">Vide</p>'; c.forEach(x => e.innerHTML += `<div class="glass p-4 rounded-xl shadow border border-slate-200/50 flex justify-between"><span class="font-bold dark:text-white text-slate-900">${DataService.escapeHtml(x.name)}</span><button onclick="clientManager.del('${x.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></div>`); }, openAddModal() { const isEditor = document.getElementById('view-devis').classList.contains('active'); if (isEditor) this.renderSel(); else this.openNewForm(false); }, async renderSel() { const c = await DataService.get('clients'); let h = '<div class="space-y-2 mb-4 max-h-60 overflow-auto custom-scrollbar">'; c.forEach(x => h += `<div onclick="clientManager.sel('${x.id}','${DataService.escapeHtml(x.name)}')" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer font-bold text-slate-900 dark:text-white hover:bg-brand-100">${DataService.escapeHtml(x.name)}</div>`); h += '</div><button onclick="uiManager.closeGenericModal();clientManager.openNewForm(true)" class="text-brand-600 text-sm font-bold">Nouveau Client</button>'; uiManager.openGenericModal('Choisir', h); }, openNewForm(isEditor = false) { uiManager.openGenericModal('Nouveau Client', `<input id="new-c-name" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Nom"><button onclick="clientManager.save(${isEditor})" class="w-full bg-brand-600 text-white p-4 rounded-xl font-bold text-lg shadow-lg">Ajouter</button>`); }, async save(s = false) {
-                console.log("save called", s);
-                try {
-                    const n = document.getElementById('new-c-name').value;
-                    if (!n) return alert("Le nom est obligatoire");
+            const clientManager = {
+                async render() { const e = document.getElementById('clients-list-body'); const c = await DataService.get('clients'); e.innerHTML = ''; if (c.length === 0) e.innerHTML = '<p class="text-slate-400 p-4">Vide</p>'; c.forEach(x => e.innerHTML += `<div class="glass p-4 rounded-xl shadow border border-slate-200/50 flex justify-between"><span class="font-bold dark:text-white text-slate-900">${DataService.escapeHtml(x.name)}</span><button onclick="clientManager.del('${x.id}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button></div>`); }, openAddModal() { const isEditor = document.getElementById('view-devis').classList.contains('active'); if (isEditor) this.renderSel(); else this.openNewForm(false); }, async renderSel() { const c = await DataService.get('clients'); let h = '<div class="space-y-2 mb-4 max-h-60 overflow-auto custom-scrollbar">'; c.forEach(x => h += `<div onclick="clientManager.sel('${x.id}','${DataService.escapeHtml(x.name)}')" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer font-bold text-slate-900 dark:text-white hover:bg-brand-100">${DataService.escapeHtml(x.name)}</div>`); h += '</div><button onclick="uiManager.closeGenericModal();clientManager.openNewForm(true)" class="text-brand-600 text-sm font-bold">Nouveau Client</button>'; uiManager.openGenericModal('Choisir', h); }, openNewForm(isEditor = false) { uiManager.openGenericModal('Nouveau Client', `<input id="new-c-name" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Nom"><button onclick="clientManager.save(${isEditor})" class="w-full bg-brand-600 text-white p-4 rounded-xl font-bold text-lg shadow-lg">Ajouter</button>`); }, async save(s = false) {
+                    console.log("save called", s);
+                    try {
+                        const n = document.getElementById('new-c-name').value;
+                        if (!n) return alert("Le nom est obligatoire");
 
-                    console.log("Calling DataService.add...");
-                    const r = await DataService.add('clients', { name: n });
-                    console.log("DataService returned:", r);
+                        console.log("Calling DataService.add...");
+                        const r = await DataService.add('clients', { name: n });
+                        console.log("DataService returned:", r);
 
-                    if (!r) throw new Error("Erreur interne: Aucune donnée retournée");
+                        if (!r) throw new Error("Erreur interne: Aucune donnée retournée");
 
-                    if (s) {
-                        this.sel(r.id, r.name);
-                    } else {
-                        uiManager.closeGenericModal();
-                        this.render();
+                        if (s) {
+                            this.sel(r.id, r.name);
+                        } else {
+                            uiManager.closeGenericModal();
+                            this.render();
+                        }
+                    } catch (e) {
+                        console.error("Save Error:", e);
+                        alert("Erreur lors de l'enregistrement: " + e.message);
                     }
-                } catch (e) {
-                    console.error("Save Error:", e);
-                    alert("Erreur lors de l'enregistrement: " + e.message);
-                }
-            }, sel(i, n) { document.getElementById('editor-client-preview').innerText = n; document.getElementById('editor-client-preview').classList.add('text-slate-900', 'dark:text-white'); document.getElementById('editor-client-id').value = i; uiManager.closeGenericModal(); }, async del(i) { if (confirm('Supprimer ?')) { await DataService.delete('clients', i); this.render(); } }
-        };
-        const itemManager = { async render(m = false) { const i = await DataService.get('items'); const e = m ? document.getElementById('modal-lib-list') : document.getElementById('items-list-body'); e.innerHTML = ''; i.forEach(x => { const a = m ? `onclick="editorManager.importItem('${DataService.escapeHtml(x.title)}',${x.price})"` : ''; e.innerHTML += `<div ${a} class="glass p-4 rounded-xl mb-2 flex justify-between cursor-pointer border border-slate-200/50 dark:border-slate-700"><span class="dark:text-white text-slate-900 font-bold">${DataService.escapeHtml(x.title)}</span><span class="font-black text-brand-600">${x.price}€</span></div>`; }); }, openAddModal() { uiManager.openGenericModal('Nouvelle Prestation', `<input id="new-i-t" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Titre"><input id="new-i-p" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Prix"><button onclick="itemManager.save()" class="w-full bg-brand-600 text-white p-4 rounded-xl font-bold text-lg shadow-lg">Ajouter</button>`); }, async save() { await DataService.add('items', { title: document.getElementById('new-i-t').value, price: parseFloat(document.getElementById('new-i-p').value) }); uiManager.closeGenericModal(); this.render(); } };
-        const calendarManager = {
-            currentDate: new Date(),
-            changeMonth(delta) { this.currentDate.setMonth(this.currentDate.getMonth() + delta); this.render(); },
-            async render() {
-                const year = this.currentDate.getFullYear();
-                const month = this.currentDate.getMonth();
-                const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-                const disp = document.getElementById('calendar-month-display');
-                if (disp) disp.innerText = `${monthNames[month]} ${year}`;
-                const grid = document.getElementById('calendar-grid');
-                if (!grid) return;
-                grid.innerHTML = '';
-                const appts = await DataService.get('appointments');
-                const firstDay = new Date(year, month, 1).getDay();
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const offset = firstDay === 0 ? 6 : firstDay - 1;
-                for (let i = 0; i < offset; i++) grid.innerHTML += `<div class="calendar-day bg-slate-50 dark:bg-slate-800/50 opacity-50"></div>`;
-                const today = new Date();
-                for (let d = 1; d <= daysInMonth; d++) {
-                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                    const isToday = (d === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                }, sel(i, n) { document.getElementById('editor-client-preview').innerText = n; document.getElementById('editor-client-preview').classList.add('text-slate-900', 'dark:text-white'); document.getElementById('editor-client-id').value = i; uiManager.closeGenericModal(); }, async del(i) { if (confirm('Supprimer ?')) { await DataService.delete('clients', i); this.render(); } }
+            };
+            const itemManager = { async render(m = false) { const i = await DataService.get('items'); const e = m ? document.getElementById('modal-lib-list') : document.getElementById('items-list-body'); e.innerHTML = ''; i.forEach(x => { const a = m ? `onclick="editorManager.importItem('${DataService.escapeHtml(x.title)}',${x.price})"` : ''; e.innerHTML += `<div ${a} class="glass p-4 rounded-xl mb-2 flex justify-between cursor-pointer border border-slate-200/50 dark:border-slate-700"><span class="dark:text-white text-slate-900 font-bold">${DataService.escapeHtml(x.title)}</span><span class="font-black text-brand-600">${x.price}€</span></div>`; }); }, openAddModal() { uiManager.openGenericModal('Nouvelle Prestation', `<input id="new-i-t" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Titre"><input id="new-i-p" class="w-full p-3 border rounded-xl mb-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white" placeholder="Prix"><button onclick="itemManager.save()" class="w-full bg-brand-600 text-white p-4 rounded-xl font-bold text-lg shadow-lg">Ajouter</button>`); }, async save() { await DataService.add('items', { title: document.getElementById('new-i-t').value, price: parseFloat(document.getElementById('new-i-p').value) }); uiManager.closeGenericModal(); this.render(); } };
+            const calendarManager = {
+                currentDate: new Date(),
+                changeMonth(delta) { this.currentDate.setMonth(this.currentDate.getMonth() + delta); this.render(); },
+                async render() {
+                    const year = this.currentDate.getFullYear();
+                    const month = this.currentDate.getMonth();
+                    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+                    const disp = document.getElementById('calendar-month-display');
+                    if (disp) disp.innerText = `${monthNames[month]} ${year}`;
+                    const grid = document.getElementById('calendar-grid');
+                    if (!grid) return;
+                    grid.innerHTML = '';
+                    const appts = await DataService.get('appointments');
+                    const firstDay = new Date(year, month, 1).getDay();
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    const offset = firstDay === 0 ? 6 : firstDay - 1;
+                    for (let i = 0; i < offset; i++) grid.innerHTML += `<div class="calendar-day bg-slate-50 dark:bg-slate-800/50 opacity-50"></div>`;
+                    const today = new Date();
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                        const isToday = (d === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                        const dayAppts = appts.filter(a => a.date === dateStr);
+                        let dots = '';
+                        dayAppts.forEach(a => {
+                            let c = 'bg-brand-500';
+                            if (a.type == 'chantier') c = 'bg-green-500';
+                            if (a.type == 'urgence') c = 'bg-red-500';
+                            dots += `<div class="w-2 h-2 rounded-full ${c} mb-0.5"></div>`;
+                        });
+                        grid.innerHTML += `<div onclick="calendarManager.openDayModal('${dateStr}')" class="calendar-day group relative hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors"><span class="text-xs font-bold text-slate-500 dark:text-slate-400">${d}</span><div class="mt-1 flex flex-wrap gap-0.5 content-start">${dots}</div></div>`;
+                    }
+                },
+                async openDayModal(dateStr) {
+                    const appts = await DataService.get('appointments');
+                    const clients = await DataService.get('clients');
                     const dayAppts = appts.filter(a => a.date === dateStr);
-                    let dots = '';
+                    const niceDate = new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                    let ops = `<option value="">-- Client --</option>`;
+                    clients.forEach(c => ops += `<option value="${c.name}">${c.name}</option>`);
+                    let list = '';
                     dayAppts.forEach(a => {
-                        let c = 'bg-brand-500';
-                        if (a.type == 'chantier') c = 'bg-green-500';
-                        if (a.type == 'urgence') c = 'bg-red-500';
-                        dots += `<div class="w-2 h-2 rounded-full ${c} mb-0.5"></div>`;
-                    });
-                    grid.innerHTML += `<div onclick="calendarManager.openDayModal('${dateStr}')" class="calendar-day group relative hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors"><span class="text-xs font-bold text-slate-500 dark:text-slate-400">${d}</span><div class="mt-1 flex flex-wrap gap-0.5 content-start">${dots}</div></div>`;
-                }
-            },
-            async openDayModal(dateStr) {
-                const appts = await DataService.get('appointments');
-                const clients = await DataService.get('clients');
-                const dayAppts = appts.filter(a => a.date === dateStr);
-                const niceDate = new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-                let ops = `<option value="">-- Client --</option>`;
-                clients.forEach(c => ops += `<option value="${c.name}">${c.name}</option>`);
-                let list = '';
-                dayAppts.forEach(a => {
-                    // Google Calendar Link Generation
-                    const startDate = dateStr.replace(/-/g, '');
-                    const endDate = new Date(new Date(dateStr).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, ''); // Next day for all-day event
-                    const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(a.title)}&dates=${startDate}/${endDate}&details=${encodeURIComponent('Type: ' + a.type)}`;
+                        // Google Calendar Link Generation
+                        const startDate = dateStr.replace(/-/g, '');
+                        const endDate = new Date(new Date(dateStr).getTime() + 86400000).toISOString().split('T')[0].replace(/-/g, ''); // Next day for all-day event
+                        const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(a.title)}&dates=${startDate}/${endDate}&details=${encodeURIComponent('Type: ' + a.type)}`;
 
-                    list += `<li class="flex justify-between items-center glass p-3 mb-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                        list += `<li class="flex justify-between items-center glass p-3 mb-2 rounded-xl border border-slate-200 dark:border-slate-700">
                         <div class="flex-1">
                             <div class="font-bold text-sm text-slate-900 dark:text-white">${DataService.escapeHtml(a.title)}</div>
                             <div class="text-xs text-slate-500">${a.type}</div>
@@ -2111,188 +2178,188 @@
                             </button>
                         </div>
                     </li>`;
-                });
-                if (!list) list = '<p class="text-slate-400 italic text-sm mb-4">Rien de prévu</p>';
-                const form = `<div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4"><label class="text-[10px] uppercase font-bold text-slate-500 mb-2 block">Ajouter</label><select id="cal-client" class="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 outline-none text-slate-900 dark:text-white" onchange="document.getElementById('cal-title').value = this.value">${ops}</select><input id="cal-title" class="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 outline-none text-slate-900 dark:text-white" placeholder="Ou titre libre..."><div class="flex gap-2"><select id="cal-type" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl outline-none text-slate-900 dark:text-white flex-1"><option value="rdv">RDV</option><option value="chantier">Chantier</option><option value="urgence">Urgence</option></select><button onclick="calendarManager.save('${dateStr}')" class="bg-brand-600 text-white font-bold rounded-xl px-4">OK</button></div></div>`;
-                window.uiManager.openGenericModal(niceDate, `<ul class="mb-2">${list}</ul>${form}`);
-            },
-            async save(dateStr) { const title = document.getElementById('cal-title').value; const type = document.getElementById('cal-type').value; if (!title) return; await DataService.add('appointments', { title, type, date: dateStr }); window.uiManager.closeGenericModal(); this.render(); },
-            async del(id, dateStr) { if (confirm('Supprimer ?')) { await DataService.delete('appointments', id); this.openDayModal(dateStr); this.render(); } }
-        };
+                    });
+                    if (!list) list = '<p class="text-slate-400 italic text-sm mb-4">Rien de prévu</p>';
+                    const form = `<div class="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4"><label class="text-[10px] uppercase font-bold text-slate-500 mb-2 block">Ajouter</label><select id="cal-client" class="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 outline-none text-slate-900 dark:text-white" onchange="document.getElementById('cal-title').value = this.value">${ops}</select><input id="cal-title" class="w-full p-3 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 outline-none text-slate-900 dark:text-white" placeholder="Ou titre libre..."><div class="flex gap-2"><select id="cal-type" class="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl outline-none text-slate-900 dark:text-white flex-1"><option value="rdv">RDV</option><option value="chantier">Chantier</option><option value="urgence">Urgence</option></select><button onclick="calendarManager.save('${dateStr}')" class="bg-brand-600 text-white font-bold rounded-xl px-4">OK</button></div></div>`;
+                    window.uiManager.openGenericModal(niceDate, `<ul class="mb-2">${list}</ul>${form}`);
+                },
+                async save(dateStr) { const title = document.getElementById('cal-title').value; const type = document.getElementById('cal-type').value; if (!title) return; await DataService.add('appointments', { title, type, date: dateStr }); window.uiManager.closeGenericModal(); this.render(); },
+                async del(id, dateStr) { if (confirm('Supprimer ?')) { await DataService.delete('appointments', id); this.openDayModal(dateStr); this.render(); } }
+            };
 
-        const siteManager = {
-            async addNote() {
-                const clients = await DataService.get('clients');
-                let ops = ''; clients.forEach(c => ops += `<option value="${c.name}">${c.name}</option>`);
-                window.uiManager.openGenericModal('Note de Chantier', `
+            const siteManager = {
+                async addNote() {
+                    const clients = await DataService.get('clients');
+                    let ops = ''; clients.forEach(c => ops += `<option value="${c.name}">${c.name}</option>`);
+                    window.uiManager.openGenericModal('Note de Chantier', `
                     <div class="space-y-4">
                         <select id="site-client" class="w-full p-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl outline-none">${ops}</select>
                         <textarea id="site-note" rows="3" class="w-full p-4 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl outline-none" placeholder="Avancement..."></textarea>
                         <button onclick="siteManager.save()" class="w-full bg-brand-600 text-white font-bold p-4 rounded-xl">Publier</button>
                     </div>
                 `);
-            },
-            async save() {
-                const client = document.getElementById('site-client').value;
-                const note = document.getElementById('site-note').value;
-                if (!client) return;
-                // Just visual for demo
-                const feed = document.getElementById('sites-feed');
-                feed.innerHTML = `<div class="glass p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 animate-fade-in"><div class="flex items-center gap-3 mb-2"><div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">${DataService.escapeHtml(client).charAt(0)}</div><div class="font-bold dark:text-white">${DataService.escapeHtml(client)}</div></div><p class="text-slate-600 dark:text-slate-300">${DataService.escapeHtml(note)}</p></div>` + feed.innerHTML;
-                window.uiManager.closeGenericModal();
-            }
-        };
+                },
+                async save() {
+                    const client = document.getElementById('site-client').value;
+                    const note = document.getElementById('site-note').value;
+                    if (!client) return;
+                    // Just visual for demo
+                    const feed = document.getElementById('sites-feed');
+                    feed.innerHTML = `<div class="glass p-6 rounded-2xl border border-slate-200 dark:border-slate-700 mb-4 animate-fade-in"><div class="flex items-center gap-3 mb-2"><div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold">${DataService.escapeHtml(client).charAt(0)}</div><div class="font-bold dark:text-white">${DataService.escapeHtml(client)}</div></div><p class="text-slate-600 dark:text-slate-300">${DataService.escapeHtml(note)}</p></div>` + feed.innerHTML;
+                    window.uiManager.closeGenericModal();
+                }
+            };
 
-        const settingsManager = {
-            async load() {
-                const s = await DataService.get('settings');
-                if (s.length > 0) {
-                    const c = s[0];
-                    if (document.getElementById('set-company')) document.getElementById('set-company').value = c.company || '';
-                    if (document.getElementById('set-siret')) document.getElementById('set-siret').value = c.siret || '';
-                    if (document.getElementById('set-address')) document.getElementById('set-address').value = c.address || '';
-                    if (document.getElementById('set-decennale')) document.getElementById('set-decennale').value = c.decennale || '';
-                    if (document.getElementById('set-rge')) document.getElementById('set-rge').value = c.rge || '';
-                    if (document.getElementById('set-tva-intra')) document.getElementById('set-tva-intra').value = c.tvaintra || '';
-                    if (c.logo) document.getElementById('preview-logo').innerHTML = `<img src="${c.logo}" class="w-full h-full object-contain">`;
-                }
-                if (auth && auth.currentUser) {
-                    document.getElementById('settings-email').innerText = auth.currentUser.email;
-                    document.getElementById('set-username').value = auth.currentUser.displayName || '';
-                    if (auth.currentUser.photoURL) document.getElementById('settings-photo').src = auth.currentUser.photoURL;
-                }
-            },
-            handleLogo(input) {
-                const file = input.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    document.getElementById('preview-logo').innerHTML = `<img src="${reader.result}" class="w-full h-full object-contain">`;
-                    document.getElementById('set-logo').dataset.b64 = reader.result;
-                };
-                reader.readAsDataURL(file);
-            },
-            async save(e) {
-                e.preventDefault();
-                const logoB64 = document.getElementById('set-logo').dataset.b64 || null;
-                const current = await DataService.get('settings');
-                const oldLogo = (current.length > 0) ? current[0].logo : null;
+            const settingsManager = {
+                async load() {
+                    const s = await DataService.get('settings');
+                    if (s.length > 0) {
+                        const c = s[0];
+                        if (document.getElementById('set-company')) document.getElementById('set-company').value = c.company || '';
+                        if (document.getElementById('set-siret')) document.getElementById('set-siret').value = c.siret || '';
+                        if (document.getElementById('set-address')) document.getElementById('set-address').value = c.address || '';
+                        if (document.getElementById('set-decennale')) document.getElementById('set-decennale').value = c.decennale || '';
+                        if (document.getElementById('set-rge')) document.getElementById('set-rge').value = c.rge || '';
+                        if (document.getElementById('set-tva-intra')) document.getElementById('set-tva-intra').value = c.tvaintra || '';
+                        if (c.logo) document.getElementById('preview-logo').innerHTML = `<img src="${c.logo}" class="w-full h-full object-contain">`;
+                    }
+                    if (auth && auth.currentUser) {
+                        document.getElementById('settings-email').innerText = auth.currentUser.email;
+                        document.getElementById('set-username').value = auth.currentUser.displayName || '';
+                        if (auth.currentUser.photoURL) document.getElementById('settings-photo').src = auth.currentUser.photoURL;
+                    }
+                },
+                handleLogo(input) {
+                    const file = input.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        document.getElementById('preview-logo').innerHTML = `<img src="${reader.result}" class="w-full h-full object-contain">`;
+                        document.getElementById('set-logo').dataset.b64 = reader.result;
+                    };
+                    reader.readAsDataURL(file);
+                },
+                async save(e) {
+                    e.preventDefault();
+                    const logoB64 = document.getElementById('set-logo').dataset.b64 || null;
+                    const current = await DataService.get('settings');
+                    const oldLogo = (current.length > 0) ? current[0].logo : null;
 
-                await DataService.saveSettings({
-                    company: document.getElementById('set-company').value,
-                    siret: document.getElementById('set-siret').value,
-                    address: document.getElementById('set-address').value,
-                    decennale: document.getElementById('set-decennale').value,
-                    rge: document.getElementById('set-rge').value,
-                    tvaintra: document.getElementById('set-tva-intra').value,
-                    logo: logoB64 || oldLogo
-                });
-                alert('OK');
-            },
-            async updateProfile() {
-                const newName = document.getElementById('set-username').value;
-                if (auth.currentUser) {
-                    try { await updateProfile(auth.currentUser, { displayName: newName }); document.getElementById('user-name').innerText = newName; alert("Profil mis à jour !"); } catch (e) { console.error(e); alert("Erreur"); }
+                    await DataService.saveSettings({
+                        company: document.getElementById('set-company').value,
+                        siret: document.getElementById('set-siret').value,
+                        address: document.getElementById('set-address').value,
+                        decennale: document.getElementById('set-decennale').value,
+                        rge: document.getElementById('set-rge').value,
+                        tvaintra: document.getElementById('set-tva-intra').value,
+                        logo: logoB64 || oldLogo
+                    });
+                    alert('OK');
+                },
+                async updateProfile() {
+                    const newName = document.getElementById('set-username').value;
+                    if (auth.currentUser) {
+                        try { await updateProfile(auth.currentUser, { displayName: newName }); document.getElementById('user-name').innerText = newName; alert("Profil mis à jour !"); } catch (e) { console.error(e); alert("Erreur"); }
+                    }
                 }
-            }
-        };
+            };
 
-        const aiManager = {
-            openModal: () => {
-                if (!DataService.checkPremium()) return; // PREMIUM CHECK
-                document.getElementById('modal-ai').classList.remove('hidden');
-            },
-            closeModal: () => document.getElementById('modal-ai').classList.add('hidden'),
-            async generate() {
-                const b = document.getElementById('ai-btn-generate'); b.innerHTML = '...';
-                await new Promise(r => setTimeout(r, 1000));
-                window.editorManager.lines = [{ d: "Peinture complète", q: 1, p: 450, tva: 0.1 }, { d: "Pose sol", q: 20, p: 40, tva: 0.2 }];
-                window.editorManager.renderLines();
-                this.closeModal();
-                b.innerHTML = 'Générer';
-            }
-        };
-        const uiManager = {
-            openGenericModal(t, c) { const m = document.getElementById('modal-generic'); m.innerHTML = `<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`; m.classList.remove('hidden'); },
-            closeGenericModal() { document.getElementById('modal-generic').classList.add('hidden'); },
-            openLegalModal(type) {
-                let title = "", content = "";
-                if (type === 'mentions') {
-                    title = "Mentions Légales";
-                    content = `<p class="text-sm text-slate-600 dark:text-slate-300 mb-2"><strong>Éditeur :</strong> Benjamin Meriot<br><strong>Adresse :</strong> 33230<br><strong>Contact :</strong> sportygamernerd@gmail.com</p><p class="text-sm text-slate-600 dark:text-slate-300">Hébergé par Vercel Inc.</p>`;
-                } else {
-                    title = "CGU & Confidentialité";
-                    content = `<p class="text-sm text-slate-600 dark:text-slate-300 mb-2"><strong>Données :</strong> Les données collectées (clients, devis) sont stockées de manière sécurisée sur Google Firebase. Elles ne sont ni vendues ni partagées.</p><p class="text-sm text-slate-600 dark:text-slate-300"><strong>Responsabilité :</strong> GoChantier n'est pas responsable des erreurs dans vos devis.</p>`;
+            const aiManager = {
+                openModal: () => {
+                    if (!DataService.checkPremium()) return; // PREMIUM CHECK
+                    document.getElementById('modal-ai').classList.remove('hidden');
+                },
+                closeModal: () => document.getElementById('modal-ai').classList.add('hidden'),
+                async generate() {
+                    const b = document.getElementById('ai-btn-generate'); b.innerHTML = '...';
+                    await new Promise(r => setTimeout(r, 1000));
+                    window.editorManager.lines = [{ d: "Peinture complète", q: 1, p: 450, tva: 0.1 }, { d: "Pose sol", q: 20, p: 40, tva: 0.2 }];
+                    window.editorManager.renderLines();
+                    this.closeModal();
+                    b.innerHTML = 'Générer';
                 }
-                this.openGenericModal(title, content);
+            };
+            const uiManager = {
+                openGenericModal(t, c) { const m = document.getElementById('modal-generic'); m.innerHTML = `<div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="uiManager.closeGenericModal()"></div><div class="glass w-full max-w-md p-6 rounded-2xl z-10 animate-slide-up shadow-2xl"><h3 class="font-bold mb-4 dark:text-white text-xl">${t}</h3><div>${c}</div></div>`; m.classList.remove('hidden'); },
+                closeGenericModal() { document.getElementById('modal-generic').classList.add('hidden'); },
+                openLegalModal(type) {
+                    let title = "", content = "";
+                    if (type === 'mentions') {
+                        title = "Mentions Légales";
+                        content = `<p class="text-sm text-slate-600 dark:text-slate-300 mb-2"><strong>Éditeur :</strong> Benjamin Meriot<br><strong>Adresse :</strong> 33230<br><strong>Contact :</strong> sportygamernerd@gmail.com</p><p class="text-sm text-slate-600 dark:text-slate-300">Hébergé par Vercel Inc.</p>`;
+                    } else {
+                        title = "CGU & Confidentialité";
+                        content = `<p class="text-sm text-slate-600 dark:text-slate-300 mb-2"><strong>Données :</strong> Les données collectées (clients, devis) sont stockées de manière sécurisée sur Google Firebase. Elles ne sont ni vendues ni partagées.</p><p class="text-sm text-slate-600 dark:text-slate-300"><strong>Responsabilité :</strong> GoChantier n'est pas responsable des erreurs dans vos devis.</p>`;
+                    }
+                    this.openGenericModal(title, content);
+                }
+            };
+            const themeManager = { toggle: () => { document.documentElement.classList.toggle('dark'); } };
+            // INIT
+            if(!auth) {
+                console.warn("Firebase Auth non disponible. Mode hors ligne/démo uniquement.");
+                // Force login view to be active if not already
+                document.getElementById('view-login').classList.add('active');
+                document.getElementById('view-login').classList.remove('hidden');
             }
-        };
-        const themeManager = { toggle: () => { document.documentElement.classList.toggle('dark'); } };
-        // INIT
-        if (!auth) {
-            console.warn("Firebase Auth non disponible. Mode hors ligne/démo uniquement.");
-            // Force login view to be active if not already
-            document.getElementById('view-login').classList.add('active');
-            document.getElementById('view-login').classList.remove('hidden');
-        }
 
         // Globals
         window.clientManager = clientManager; window.itemManager = itemManager;
-        window.calendarManager = calendarManager; window.settingsManager = settingsManager;
-        window.aiManager = aiManager; window.siteManager = siteManager;
-        window.uiManager = uiManager; window.themeManager = themeManager;
+            window.calendarManager = calendarManager; window.settingsManager = settingsManager;
+            window.aiManager = aiManager; window.siteManager = siteManager;
+            window.uiManager = uiManager; window.themeManager = themeManager;
 
-        console.log("Modules attached to window");
+            console.log("Modules attached to window");
 
-        // --- AUTH STATE LISTENER (MOVED TO END) ---
-        if (auth) {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    // alert("Utilisateur connecté: " + user.email); // Debug
-                    console.log("Utilisateur connecté:", user.uid);
-                    DataService.userId = user.uid;
+            // --- AUTH STATE LISTENER (MOVED TO END) ---
+            if(auth) {
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        // alert("Utilisateur connecté: " + user.email); // Debug
+                        console.log("Utilisateur connecté:", user.uid);
+                        DataService.userId = user.uid;
 
-                    // Update UI
-                    const userName = document.getElementById('user-name');
-                    const userPhoto = document.getElementById('user-photo');
-                    const dashName = document.getElementById('dash-name');
-                    const settingsEmail = document.getElementById('settings-email');
-                    const setUsername = document.getElementById('set-username');
-                    const settingsPhoto = document.getElementById('settings-photo');
+                        // Update UI
+                        const userName = document.getElementById('user-name');
+                        const userPhoto = document.getElementById('user-photo');
+                        const dashName = document.getElementById('dash-name');
+                        const settingsEmail = document.getElementById('settings-email');
+                        const setUsername = document.getElementById('set-username');
+                        const settingsPhoto = document.getElementById('settings-photo');
 
-                    if (userName) userName.innerText = user.displayName || 'Utilisateur';
-                    if (userPhoto && user.photoURL) userPhoto.src = user.photoURL;
-                    if (dashName) dashName.innerText = (user.displayName || 'Chef').split(' ')[0];
-                    if (settingsEmail) settingsEmail.innerText = user.email;
-                    if (setUsername) setUsername.value = user.displayName;
-                    if (settingsPhoto && user.photoURL) settingsPhoto.src = user.photoURL;
+                        if (userName) userName.innerText = user.displayName || 'Utilisateur';
+                        if (userPhoto && user.photoURL) userPhoto.src = user.photoURL;
+                        if (dashName) dashName.innerText = (user.displayName || 'Chef').split(' ')[0];
+                        if (settingsEmail) settingsEmail.innerText = user.email;
+                        if (setUsername) setUsername.value = user.displayName;
+                        if (settingsPhoto && user.photoURL) settingsPhoto.src = user.photoURL;
 
-                    // Mock Subscription (Copy from Demo)
-                    window.subscriptionManager = { checkLimit: async () => true, checkForSuccess: () => { } };
+                        // Mock Subscription (Copy from Demo)
+                        window.subscriptionManager = { checkLimit: async () => true, checkForSuccess: () => { } };
 
-                    // Initialize Signature (Copy from Demo)
-                    if (window.signatureManager) {
-                        window.signatureManager.init();
+                        // Initialize Signature (Copy from Demo)
+                        if (window.signatureManager) {
+                            window.signatureManager.init();
+                        }
+
+                        // Switch View
+                        const loginView = document.getElementById('view-login');
+                        if (loginView) {
+                            loginView.classList.remove('active');
+                            loginView.classList.add('hidden');
+                            loginView.style.display = 'none'; // Force hide
+                        }
+                        if (window.router) {
+                            router.navigate('home');
+                        }
+                    } else {
+                        console.log("Utilisateur déconnecté");
+                        DataService.userId = null;
+                        document.getElementById('view-login').classList.add('active');
+                        document.getElementById('view-login').classList.remove('hidden');
                     }
-
-                    // Switch View
-                    const loginView = document.getElementById('view-login');
-                    if (loginView) {
-                        loginView.classList.remove('active');
-                        loginView.classList.add('hidden');
-                        loginView.style.display = 'none'; // Force hide
-                    }
-                    if (window.router) {
-                        router.navigate('home');
-                    }
-                } else {
-                    console.log("Utilisateur déconnecté");
-                    DataService.userId = null;
-                    document.getElementById('view-login').classList.add('active');
-                    document.getElementById('view-login').classList.remove('hidden');
-                }
-            });
-        }
+                });
+            }
     </script>
 </body>
 
