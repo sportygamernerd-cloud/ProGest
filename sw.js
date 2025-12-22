@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gochantier-v1';
+const CACHE_NAME = 'gochantier-v2';
 const ASSETS = [
     './',
     './index.html',
