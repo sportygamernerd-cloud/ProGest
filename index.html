@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GoChantier - L'outil des Artisans</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <meta name="theme-color" content="#2563eb">
 
     <!-- SÉCURITÉ CSP -->
     <meta http-equiv="Content-Security-Policy"
@@ -2470,6 +2473,15 @@
                     document.getElementById('view-login').classList.add('active');
                     document.getElementById('view-login').classList.remove('hidden');
                 }
+            });
+        }
+
+        // PWA SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered', reg))
+                    .catch(err => console.log('SW failed', err));
             });
         }
     </script>
