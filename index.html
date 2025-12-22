@@ -722,6 +722,17 @@
                 </div>
                 <!-- AI BUTTON REMOVED -->
                 <div>
+                    <!-- SMART DICTATION BTN -->
+                    <button onclick="editorManager.startSmartDictation()" id="btn-smart-mic"
+                        class="w-full mb-6 py-6 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-xl shadow-brand-500/30 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] transition-transform group">
+                        <div
+                            class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-1 group-hover:bg-white/30 transition-colors">
+                            <i class="fa-solid fa-microphone text-3xl"></i>
+                        </div>
+                        <span class="font-black text-lg">Dictée Intelligente</span>
+                        <span class="text-xs text-brand-100 font-medium">"Pose de 3 prises et 1 tableau..."</span>
+                    </button>
+
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="font-bold text-sm uppercase text-slate-500">Prestations</h3><button
                             onclick="editorManager.openLibraryModal()"
@@ -1936,6 +1947,94 @@
                     </div>`;
                 });
                 this.updateTotals();
+            },
+
+            // SMART DICTATION (GLOBAL)
+            startSmartDictation() {
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return alert("Navigateur non compatible");
+
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'fr-FR';
+                recognition.interimResults = false;
+
+                const btn = document.getElementById('btn-smart-mic');
+                const originalContent = btn.innerHTML;
+
+                btn.classList.remove('from-brand-600', 'to-brand-500');
+                btn.classList.add('animate-pulse', 'bg-red-500'); // Simple red bg for recording
+                btn.innerHTML = '<i class="fa-solid fa-microphone-lines text-4xl animate-bounce"></i><span class="font-bold mt-2">Je vous écoute...</span>';
+
+                recognition.start();
+
+                recognition.onresult = (e) => {
+                    const text = e.results[0][0].transcript;
+                    this.analyzeAndAdd(text);
+                };
+
+                recognition.onend = () => {
+                    btn.classList.remove('animate-pulse', 'bg-red-500');
+                    btn.classList.add('from-brand-600', 'to-brand-500');
+                    btn.innerHTML = originalContent;
+                };
+
+                recognition.onerror = (e) => {
+                    console.error(e);
+                    btn.classList.remove('animate-pulse', 'bg-red-500');
+                    btn.classList.add('from-brand-600', 'to-brand-500');
+                    btn.innerHTML = originalContent;
+                    alert("Erreur: " + e.error);
+                };
+            },
+
+            analyzeAndAdd(text) {
+                console.log("Analyzing:", text);
+                const keywords = [
+                    { k: 'prise', l: 'Pose Prise de Courant', p: 25 },
+                    { k: 'interrupteur', l: 'Pose Interrupteur', p: 20 },
+                    { k: 'tableau', l: 'Remplacement Tableau Électrique', p: 150 },
+                    { k: 'peinture', l: 'Forfait Peinture (m²)', p: 35 },
+                    { k: 'robinet', l: 'Remplacement Robinet', p: 80 },
+                    { k: 'wc', l: 'Pose WC Suspendu', p: 250 },
+                    { k: 'lavabo', l: 'Pose Lavabo', p: 120 },
+                    { k: 'douche', l: 'Installation Douche', p: 450 },
+                    { k: 'placo', l: 'Pose Placo (m²)', p: 45 },
+                    { k: 'carrelage', l: 'Pose Carrelage (m²)', p: 55 }
+                ];
+
+                let found = false;
+                const lowerText = text.toLowerCase();
+
+                keywords.forEach(item => {
+                    // Check for singular or plural (simple check)
+                    if (lowerText.includes(item.k)) {
+                        // Try to find quantity: "3 prises"
+                        // Regex: look for number before the keyword
+                        const regex = new RegExp(`(\\d+)\\s*\\w*\\s*${item.k}`, 'i');
+                        const match = lowerText.match(regex);
+                        const qty = match ? parseInt(match[1]) : 1;
+
+                        // Check if we already have an empty line at the start (default) and remove it if it's the only one
+                        if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) {
+                            this.lines = [];
+                        }
+
+                        this.lines.push({ d: item.l, q: qty, p: item.p, tva: 0.2 });
+                        found = true;
+                    }
+                });
+
+                if (!found) {
+                    // No keyword? Add raw text
+                    if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) {
+                        this.lines = [];
+                    }
+                    this.lines.push({ d: text.charAt(0).toUpperCase() + text.slice(1), q: 1, p: 0, tva: 0.2 });
+                }
+
+                this.renderLines();
+                DataService.incrementCounter('quotes');
+                alert(`🗣️ Analyse terminée !\n\nJ'ai compris : "${text}"`);
             },
 
             // VOICE DICTATION
