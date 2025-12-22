@@ -1063,6 +1063,14 @@
                 <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full"></div>
             </div>
 
+            <!-- IA SHORTCUT -->
+            <button
+                onclick="router.navigate('devis'); setTimeout(() => document.getElementById('btn-smart-mic').scrollIntoView({behavior: 'smooth'}), 500); document.getElementById('modal-mobile-menu').classList.add('hidden')"
+                class="w-full mb-6 p-4 rounded-2xl bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/30 flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform">
+                <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+                <span class="font-bold text-lg">IA Chantier</span>
+            </button>
+
             <div class="grid grid-cols-4 gap-4 mb-8">
                 <button
                     onclick="router.navigate('clients');document.getElementById('modal-mobile-menu').classList.add('hidden')"
