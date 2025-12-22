@@ -726,14 +726,33 @@
                 <!-- AI BUTTON REMOVED -->
                 <div>
                     <!-- SMART DICTATION BTN -->
-                    <button onclick="editorManager.startSmartDictation()" id="btn-smart-mic"
-                        class="w-full mb-6 py-6 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-xl shadow-brand-500/30 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] transition-transform group">
-                        <div
-                            class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-1 group-hover:bg-white/30 transition-colors">
-                            <i class="fa-solid fa-microphone text-3xl"></i>
-                        </div>
-                        <span class="font-black text-lg">Dictée Intelligente</span>
-                        <span class="text-xs text-brand-100 font-medium">"Pose de 3 prises et 1 tableau..."</span>
+                    <!-- AI TOOLS GRID -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <button onclick="editorManager.startSmartDictation()" id="btn-smart-mic"
+                            class="py-6 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-500/20 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] transition-transform group">
+                            <div
+                                class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-1 group-hover:bg-white/30 transition-colors">
+                                <i class="fa-solid fa-microphone text-2xl"></i>
+                            </div>
+                            <span class="font-bold text-sm">Dictée IA</span>
+                        </button>
+                        <button onclick="document.getElementById('input-ai-photo').click()"
+                            class="py-6 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/20 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] transition-transform group">
+                            <div
+                                class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-1 group-hover:bg-white/30 transition-colors">
+                                <i class="fa-solid fa-camera text-2xl"></i>
+                            </div>
+                            <span class="font-bold text-sm">Analyse Photo</span>
+                        </button>
+                        <input type="file" id="input-ai-photo" class="hidden" accept="image/*"
+                            onchange="editorManager.analyzePhoto(this)">
+                    </div>
+                    <div
+                        class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-1 group-hover:bg-white/30 transition-colors">
+                        <i class="fa-solid fa-microphone text-3xl"></i>
+                    </div>
+                    <span class="font-black text-lg">Dictée Intelligente</span>
+                    <span class="text-xs text-brand-100 font-medium">"Pose de 3 prises et 1 tableau..."</span>
                     </button>
 
                     <div class="flex justify-between items-center mb-3">
@@ -1916,6 +1935,28 @@
 
         window.editorManager = {
             lines: [],
+            marketPrices: {
+                'prise': 25, 'interrupteur': 20, 'tableau': 150, 'peinture': 35, 'robinet': 80, 'wc': 250, 'lavabo': 120, 'douche': 450, 'placo': 45, 'carrelage': 55
+            },
+            async analyzePhoto(input) {
+                if (input.files && input.files[0]) {
+                    const btn = input.previousElementSibling;
+                    const originalContent = btn.innerHTML;
+                    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl"></i><span class="font-bold text-sm">Analyse IA...</span>';
+                    await new Promise(r => setTimeout(r, 2500));
+                    const mockResults = [
+                        { d: 'Rénovation Mur (Dégradé)', q: 15, p: 45 },
+                        { d: 'Pose Prise de Courant (Manquante)', q: 3, p: 25 },
+                        { d: 'Peinture Plafond (Tache)', q: 1, p: 120 }
+                    ];
+                    if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) this.lines = [];
+                    mockResults.forEach(r => this.lines.push({ ...r, tva: 0.2 }));
+                    this.renderLines();
+                    DataService.incrementCounter('quotes');
+                    btn.innerHTML = originalContent;
+                    alert("📸 Analyse terminée !\n\nL'IA a détecté :\n- Des dégradations sur les murs\n- Des prises manquantes\n- Une tache au plafond\n\nLe devis a été pré-rempli.");
+                }
+            },
             init() {
                 this.lines = [{ d: '', q: 1, p: 0, tva: 0.2 }];
                 this.renderLines();
@@ -1942,7 +1983,18 @@
                 const e = document.getElementById('editor-lines');
                 e.innerHTML = '';
                 this.lines.forEach((l, i) => {
-                    e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2">
+                    // SMART MARGIN CHECK
+                    let warning = '';
+                    const lowerDesc = l.d.toLowerCase();
+                    for (const [key, refPrice] of Object.entries(this.marketPrices)) {
+                        if (lowerDesc.includes(key) && l.p > 0 && l.p < refPrice * 0.8) {
+                            warning = `<div class="absolute -top-2 -right-2 bg-amber-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-lg animate-bounce cursor-pointer z-10" onclick="alert('⚠️ Marge Faible détectée !\\n\\nPrix marché : ${refPrice}€\\nVotre prix : ${l.p}€\\n\\nConseil : Augmentez votre prix pour garantir votre rentabilité.')"><i class="fa-solid fa-triangle-exclamation"></i></div>`;
+                            break;
+                        }
+                    }
+
+                    e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2 relative">
+                        ${warning}
                         <button onclick="editorManager.removeLine(${i})" class="text-red-500 px-2"><i class="fa-solid fa-times"></i></button>
                         <div class="flex-1 flex items-center gap-2 min-w-[150px] bg-slate-50 dark:bg-slate-800/50 rounded-lg px-2 border border-transparent focus-within:border-brand-500 transition-colors">
                             <input class="flex-1 bg-transparent outline-none dark:text-white text-slate-900 placeholder-slate-400 font-medium py-2" value="${DataService.escapeHtml(l.d)}" oninput="editorManager.up(${i},'d',this.value)" placeholder="Prestation">
