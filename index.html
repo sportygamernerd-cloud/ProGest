@@ -2013,6 +2013,18 @@
         };
 
         window.editorManager = {
+            // CONFIGURATION IA (SYSTEM PROMPT)
+            AI_PROMPT: `Tu es un artisan français expérimenté.
+
+À partir de cette photo de chantier :
+1. Dis quel type de prestation est nécessaire.
+2. Rédige un devis simple et professionnel en français.
+3. Utilise des phrases claires compréhensibles par un client.
+
+Ne parle pas de toi.
+Ne parle pas d’IA.
+Reste réaliste et prudent.`,
+
             lines: [],
             marketPrices: {
                 'prise': 25, 'interrupteur': 20, 'tableau': 150, 'peinture': 35, 'robinet': 80, 'wc': 250, 'lavabo': 120, 'douche': 450, 'placo': 45, 'carrelage': 55
@@ -2022,6 +2034,10 @@
                     const btn = input.previousElementSibling;
                     const originalContent = btn.innerHTML;
                     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl"></i><span class="font-bold text-sm">Analyse IA...</span>';
+
+                    // SIMULATION APPEL IA
+                    console.log("🚀 Envoi à l'IA avec le prompt :", this.AI_PROMPT);
+
                     await new Promise(r => setTimeout(r, 2500));
                     const mockResults = [
                         { d: 'Rénovation Mur (Dégradé)', q: 15, p: 45 },
