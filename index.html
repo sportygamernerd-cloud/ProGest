@@ -1584,23 +1584,26 @@
                 if (!email || !password) return alert("Veuillez remplir l'email et le mot de passe.");
                 if (!auth) return alert("Erreur: Firebase non initialisé");
 
+                errorDiv.classList.add('hidden');
+
                 try {
-                    errorDiv.classList.add('hidden');
-                    // Try to sign in
-                    await signInWithEmailAndPassword(auth, email, password);
+                    // 1. On essaie de CRÉER le compte (c'est une landing page, donc priorité aux nouveaux)
+                    await createUserWithEmailAndPassword(auth, email, password);
                 } catch (e) {
-                    // If user not found, try to sign up
-                    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+                    // 2. Si l'email existe déjà, on essaie de se CONNECTER
+                    if (e.code === 'auth/email-already-in-use') {
                         try {
-                            await createUserWithEmailAndPassword(auth, email, password);
-                        } catch (createErr) {
-                            console.error(createErr);
-                            errorDiv.innerText = "Erreur création: " + createErr.message;
+                            await signInWithEmailAndPassword(auth, email, password);
+                        } catch (loginErr) {
+                            console.error(loginErr);
+                            // Là c'est une vraie erreur de connexion (ex: mauvais mot de passe)
+                            errorDiv.innerText = "Mot de passe incorrect pour cet email.";
                             errorDiv.classList.remove('hidden');
                         }
                     } else {
+                        // Autre erreur de création (ex: mot de passe trop court)
                         console.error(e);
-                        errorDiv.innerText = "Erreur connexion: " + e.message;
+                        errorDiv.innerText = "Erreur: " + e.message;
                         errorDiv.classList.remove('hidden');
                     }
                 }
