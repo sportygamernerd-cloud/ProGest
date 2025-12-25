@@ -1601,20 +1601,19 @@
                     // 1. On essaie de CRÉER le compte (c'est une landing page, donc priorité aux nouveaux)
                     await createUserWithEmailAndPassword(auth, email, password);
                 } catch (e) {
-                    // 2. Si l'email existe déjà, on essaie de se CONNECTER
-                    if (e.code === 'auth/email-already-in-use') {
-                        try {
-                            await signInWithEmailAndPassword(auth, email, password);
-                        } catch (loginErr) {
-                            console.error(loginErr);
-                            // Là c'est une vraie erreur de connexion (ex: mauvais mot de passe)
-                            errorDiv.innerText = "Mot de passe incorrect pour cet email.";
-                            errorDiv.classList.remove('hidden');
+                    console.log("Create failed, trying login...", e.code);
+                    // 2. Si l'email existe déjà OU si autre erreur de création, on essaie de se CONNECTER
+                    // (C'est plus robuste que de juste vérifier 'email-already-in-use')
+                    try {
+                        await signInWithEmailAndPassword(auth, email, password);
+                    } catch (loginErr) {
+                        console.error(loginErr);
+                        // Vraie erreur de connexion
+                        if (loginErr.code === 'auth/invalid-credential' || loginErr.code === 'auth/wrong-password') {
+                            errorDiv.innerText = "Email ou mot de passe incorrect.";
+                        } else {
+                            errorDiv.innerText = "Erreur: " + loginErr.message;
                         }
-                    } else {
-                        // Autre erreur de création (ex: mot de passe trop court)
-                        console.error(e);
-                        errorDiv.innerText = "Erreur: " + e.message;
                         errorDiv.classList.remove('hidden');
                     }
                 }
@@ -2127,22 +2126,10 @@ Exemple:
                         DataService.incrementCounter('quotes');
                         alert("📸 Analyse terminée ! Le devis a été généré via l'IA.");
                     } catch (e) {
-                        console.error("API Error, falling back to simulation:", e);
-
-                        // FALLBACK : MODE SIMULATION
-                        const mockResults = [
-                            { d: 'Rénovation Mur (Mode Dégradé)', q: 15, p: 45 },
-                            { d: 'Pose Prise (Mode Dégradé)', q: 3, p: 25 },
-                            { d: 'Peinture Plafond (Mode Dégradé)', q: 1, p: 120 }
-                        ];
-
-                        if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) this.lines = [];
-                        
-                        mockResults.forEach(r => this.lines.push({ ...r, tva: 0.2 }));
-                        this.renderLines();
-                        DataService.incrementCounter('quotes');
-
-                        alert(`⚠️ Erreur IA: ${ e.message } \n\n→ Mode DÉMO activé.\n(Vérifiez que la variable d'environnement GEMINI_API_KEY est bien configurée sur Vercel)`);
+                        alert(`⚠️ Erreur IA: ${ e.message } `);
+                    } finally {
+                        btn.innerHTML = originalContent;
+                    }
                     } finally {
             btn.innerHTML = originalContent;
         }
@@ -2167,32 +2154,32 @@ Exemple:
             async callGeminiAPI(key, imageBase64) {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
 
-            const body = {
-                contents: [{
-                    parts: [
-                        { text: this.AI_PROMPT },
-                        { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
-                    ]
-                }]
-            };
+        const body = {
+            contents: [{
+                parts: [
+                    { text: this.AI_PROMPT },
+                    { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
+                ]
+            }]
+        };
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
 
-            if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+        if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
 
-            const data = await response.json();
+        const data = await response.json();
 
-            // Extract Text
-            const text = data.candidates[0].content.parts[0].text;
+        // Extract Text
+        const text = data.candidates[0].content.parts[0].text;
 
-            // Clean Markdown if present (```json ... ```)
-            const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        // Clean Markdown if present (```json ... ```)
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-            return JSON.parse(cleanText);
+        return JSON.parse(cleanText);
         },
         init() {
             this.lines = [{ d: '', q: 1, p: 0, tva: 0.2 }];
