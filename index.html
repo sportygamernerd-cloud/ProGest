@@ -2099,6 +2099,11 @@ Exemple :
                     } catch (e) {
                         console.error(e);
                         alert("Erreur IA : " + e.message);
+                        // Reset Key if API Error
+                        if (e.message.includes('400') || e.message.includes('403') || e.message.includes('API Error')) {
+                            localStorage.removeItem('gemini_api_key');
+                            alert("La clé API semble invalide. Elle a été supprimée. Veuillez réessayer pour en entrer une nouvelle.");
+                        }
                     } finally {
                         btn.innerHTML = originalContent;
                     }
@@ -2643,6 +2648,23 @@ Exemple :
                     document.getElementById('settings-email').innerText = auth.currentUser.email;
                     document.getElementById('set-username').value = auth.currentUser.displayName || '';
                     if (auth.currentUser.photoURL) document.getElementById('settings-photo').src = auth.currentUser.photoURL;
+                }
+
+                // Add Reset API Key Button if not exists
+                const container = document.getElementById('view-settings');
+                if (container && !document.getElementById('btn-reset-key')) {
+                    const div = document.createElement('div');
+                    div.className = "mt-8 pt-8 border-t border-slate-200 dark:border-slate-700";
+                    div.innerHTML = `
+                        <h3 class="font-bold mb-4 dark:text-white">Intelligence Artificielle</h3>
+                        <button id="btn-reset-key" onclick="localStorage.removeItem('gemini_api_key'); alert('Clé API supprimée ! Lancez une analyse photo pour en entrer une nouvelle.');" 
+                            class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl font-bold hover:bg-slate-300 transition-colors">
+                            <i class="fa-solid fa-key mr-2"></i> Changer la clé API Gemini
+                        </button>
+                    `;
+                    // Append to the white card container
+                    const card = container.querySelector('.glass.p-6');
+                    if (card) card.appendChild(div);
                 }
             },
             handleLogo(input) {
