@@ -1047,18 +1047,7 @@
                     mentions</button>
             </form>
 
-            <!-- INTELLIGENCE ARTIFICIELLE (FIXED) -->
-            <div class="glass p-8 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 mt-8">
-                <h3 class="font-bold text-lg mb-4 dark:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i> Intelligence Artificielle
-                </h3>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Gérez votre connexion à l'IA Gemini pour
-                    l'analyse de photos.</p>
-                <button onclick="editorManager.openApiKeyModal()"
-                    class="w-full py-3 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 font-bold rounded-xl border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-colors flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-key"></i> Configurer / Changer la clé API
-                </button>
-            </div>
+
 
             <!-- SECTION PROFIL -->
             <div class="glass p-8 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-700/50 mt-8">
@@ -2080,30 +2069,41 @@ Exemple:
                     const btn = input.previousElementSibling;
                     const originalContent = btn.innerHTML;
 
-                    // 1. Get API Key
-                    // 1. Get API Key
-                    let apiKey = localStorage.getItem('gemini_api_key');
-                    if (!apiKey) {
-                        this.openApiKeyModal();
-                        return;
-                    }
+            async analyzePhoto(input) {
+                if (input.files && input.files[0]) {
+                    const btn = input.previousElementSibling;
+                    const originalContent = btn.innerHTML;
 
                     try {
                         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl"></i><span class="font-bold text-sm">IA réfléchit...</span>';
 
-                        // 2. Convert Image
+                        // 1. Convert Image
                         const base64Image = await this.fileToBase64(input.files[0]);
 
-                        // 3. Call Gemini
-                        const jsonResponse = await this.callGeminiAPI(apiKey, base64Image);
+                        // 2. Call Serverless API (Hide Key)
+                        const response = await fetch('/api/analyze', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                prompt: this.AI_PROMPT,
+                                imageBase64: base64Image
+                            })
+                        });
 
-                        // 4. Parse Results
+                        if (!response.ok) {
+                            const errData = await response.json().catch(() => ({}));
+                            throw new Error(errData.error || `Erreur serveur(${ response.status
+        })`);
+                        }
+
+                        const jsonResponse = await response.json();
+
+                        // 3. Parse Results
                         console.log("IA Response:", jsonResponse);
 
                         if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) this.lines = [];
 
                         jsonResponse.forEach(r => {
-                            // Validate data
                             if (r.d && r.p) {
                                 this.lines.push({
                                     d: r.d,
@@ -2116,115 +2116,75 @@ Exemple:
 
                         this.renderLines();
                         DataService.incrementCounter('quotes');
-                        alert("📸 Analyse terminée ! Le devis a été généré via Gemini Pro Vision.");
+                        alert("📸 Analyse terminée ! Le devis a été généré via l'IA.");
                     } catch (e) {
                         console.error("API Error, falling back to simulation:", e);
 
                         // FALLBACK : MODE SIMULATION
-                        // Si l'API échoue, on ne bloque pas l'utilisateur, on montre que ça marche "en principe".
                         const mockResults = [
-                            { d: 'Rénovation Mur (Détection Auto)', q: 15, p: 45 },
-                            { d: 'Pose Prise (Détection Auto)', q: 3, p: 25 },
-                            { d: 'Peinture Plafond (Détection Auto)', q: 1, p: 120 }
+                            { d: 'Rénovation Mur (Mode Dégradé)', q: 15, p: 45 },
+                            { d: 'Pose Prise (Mode Dégradé)', q: 3, p: 25 },
+                            { d: 'Peinture Plafond (Mode Dégradé)', q: 1, p: 120 }
                         ];
 
                         if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) this.lines = [];
-
+                        
                         mockResults.forEach(r => this.lines.push({ ...r, tva: 0.2 }));
                         this.renderLines();
                         DataService.incrementCounter('quotes');
 
-                        alert("⚠️ Note : Votre clé API semble incorrecte ou absente.\n\n→ Mode DÉMO activé : Voici un exemple de ce que l'IA générerait.");
-
-                        // On supprime la clé incorrecte pour retenter la prochaine fois
-                        if (e.message.includes('400') || e.message.includes('403') || e.message.includes('API Error')) {
-                            localStorage.removeItem('gemini_api_key');
-                        }
+                        alert(`⚠️ Erreur IA: ${ e.message } \n\n→ Mode DÉMO activé.\n(Vérifiez que la variable d'environnement GEMINI_API_KEY est bien configurée sur Vercel)`);
                     } finally {
-                        btn.innerHTML = originalContent;
-                    }
+            btn.innerHTML = originalContent;
+        }
                 }
             },
 
-            openApiKeyModal() {
-                uiManager.openGenericModal('Activer l\'IA (Gemini)', `
-                < div class= "space-y-4" >
-                        <p class="text-sm text-slate-500 dark:text-slate-400">
-                            Pour analyser vos photos, vous avez besoin d'une clé API Gemini (Google).<br>
-                            C'est gratuit et sécurisé (stocké sur votre appareil).
-                        </p>
-                        <ol class="list-decimal list-inside text-sm text-slate-600 dark:text-slate-300 space-y-2">
-                            <li>Allez sur <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-brand-600 font-bold hover:underline">aistudio.google.com</a></li>
-                            <li>Cliquez sur <b>Create API key</b></li>
-                            <li>Copiez la clé (commence par "AIza")</li>
-                        </ol>
-                        <input id="input-api-key" type="text" placeholder="Collez votre clé API ici..." class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:text-white font-mono text-sm">
-                        <button onclick="editorManager.saveApiKey()" class="w-full bg-brand-600 text-white font-bold p-3 rounded-xl hover:bg-brand-700 transition-colors">
-                            Enregistrer et Activer
-                        </button>
-                    </div>
-                `);
-            },
 
-            saveApiKey() {
-                const input = document.getElementById('input-api-key');
-                let key = input.value.trim();
-                // Basic cleanup
-                key = key.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
 
-                if (!key.startsWith('AIza')) {
-                    alert("⚠️ Cette clé ne semble pas valide.\nElle doit commencer par 'AIza'.");
-                    return;
-                }
-
-                localStorage.setItem('gemini_api_key', key);
-                uiManager.closeGenericModal();
-                alert("✅ Clé enregistrée ! Vous pouvez maintenant prendre une photo.");
-            },
-
-            fileToBase64(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => {
-                        // Remove data:image/xxx;base64, prefix
-                        const base64String = reader.result.split(',')[1];
-                        resolve(base64String);
-                    };
-                    reader.onerror = error => reject(error);
-                });
-            },
+        fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    // Remove data:image/xxx;base64, prefix
+                    const base64String = reader.result.split(',')[1];
+                    resolve(base64String);
+                };
+                reader.onerror = error => reject(error);
+            });
+        },
 
             async callGeminiAPI(key, imageBase64) {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
 
-        const body = {
-            contents: [{
-                parts: [
-                    { text: this.AI_PROMPT },
-                    { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
-                ]
-            }]
-        };
+            const body = {
+                contents: [{
+                    parts: [
+                        { text: this.AI_PROMPT },
+                        { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
+                    ]
+                }]
+            };
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
 
-        if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+            if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
 
-        const data = await response.json();
+            const data = await response.json();
 
-        // Extract Text
-        const text = data.candidates[0].content.parts[0].text;
+            // Extract Text
+            const text = data.candidates[0].content.parts[0].text;
 
-        // Clean Markdown if present (```json ... ```)
-        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            // Clean Markdown if present (```json ... ```)
+            const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-        return JSON.parse(cleanText);
-            },
+            return JSON.parse(cleanText);
+        },
         init() {
             this.lines = [{ d: '', q: 1, p: 0, tva: 0.2 }];
             this.renderLines();
