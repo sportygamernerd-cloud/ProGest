@@ -279,12 +279,19 @@
                     <span class="text-slate-900 dark:text-white font-bold">Gagnez 4h par semaine</span> et sécurisez vos
                     marges.
                 </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4 animate-slide-up delay-200">
-                    <button onclick="authManager.login()"
-                        class="btn-action bg-brand-600 text-white font-bold py-4 px-8 rounded-2xl shadow-xl shadow-brand-500/30 hover:bg-brand-700 hover:scale-105 transition-all flex items-center justify-center gap-3 text-lg">
-                        <i class="fa-solid fa-camera"></i>
-                        Prendre une photo → générer le devis
-                    </button>
+                <div class="flex flex-col gap-4 max-w-sm mx-auto animate-slide-up delay-200">
+                    <div
+                        class="bg-white dark:bg-slate-800 p-2 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 flex flex-col gap-2">
+                        <input type="email" id="login-email" placeholder="Votre email"
+                            class="w-full bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 dark:text-white font-bold">
+                        <input type="password" id="login-password" placeholder="Mot de passe"
+                            class="w-full bg-slate-50 dark:bg-slate-900 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 dark:text-white font-bold">
+                        <button onclick="authManager.loginEmail()"
+                            class="btn-action bg-brand-600 text-white font-bold py-3 rounded-xl hover:bg-brand-700 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-arrow-right"></i>
+                            Se connecter / S'inscrire
+                        </button>
+                    </div>
                 </div>
                 <div
                     class="mt-8 flex items-center justify-center gap-6 text-sm text-slate-400 animate-fade-in delay-300">
@@ -1569,25 +1576,33 @@
 
         // --- 5. AUTH MANAGER (UPDATED FOR DEMO) ---
         window.authManager = {
-            login: async () => {
+            loginEmail: async () => {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
                 const errorDiv = document.getElementById('login-error');
+
+                if (!email || !password) return alert("Veuillez remplir l'email et le mot de passe.");
                 if (!auth) return alert("Erreur: Firebase non initialisé");
+
                 try {
                     errorDiv.classList.add('hidden');
-                    await signInWithPopup(auth, new GoogleAuthProvider());
-                }
-                catch (e) {
-                    console.error(e);
-                    let msg = "Erreur de connexion.";
-                    // Detailed error handling
-                    msg += ` [${e.code}] ${e.message}`;
-
-                    if (e.code === 'auth/unauthorized-domain') msg = "⚠️ Domaine non autorisé. Ajoutez ce domaine dans Firebase Console > Auth > Settings > Authorized Domains.";
-                    else if (e.code === 'auth/popup-closed-by-user') msg = "Connexion annulée par l'utilisateur.";
-                    else if (e.code === 'auth/internal-error') msg = "Erreur interne Google. Vérifiez l'email de support dans la console Firebase (Project Settings > General).";
-
-                    errorDiv.innerText = msg;
-                    errorDiv.classList.remove('hidden');
+                    // Try to sign in
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch (e) {
+                    // If user not found, try to sign up
+                    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+                        try {
+                            await createUserWithEmailAndPassword(auth, email, password);
+                        } catch (createErr) {
+                            console.error(createErr);
+                            errorDiv.innerText = "Erreur création: " + createErr.message;
+                            errorDiv.classList.remove('hidden');
+                        }
+                    } else {
+                        console.error(e);
+                        errorDiv.innerText = "Erreur connexion: " + e.message;
+                        errorDiv.classList.remove('hidden');
+                    }
                 }
             },
             loginDemo: () => {
