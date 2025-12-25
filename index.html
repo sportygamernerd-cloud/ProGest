@@ -2064,8 +2064,12 @@ Exemple :
                     const originalContent = btn.innerHTML;
 
                     // 1. Get API Key
-                    const apiKey = this.getGeminiKey();
-                    if (!apiKey) return;
+                    // 1. Get API Key
+                    let apiKey = localStorage.getItem('gemini_api_key');
+                    if (!apiKey) {
+                        this.openApiKeyModal();
+                        return;
+                    }
 
                     try {
                         btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl"></i><span class="font-bold text-sm">IA réfléchit...</span>';
@@ -2125,13 +2129,40 @@ Exemple :
                 }
             },
 
-            getGeminiKey() {
-                let key = localStorage.getItem('gemini_api_key');
-                if (!key) {
-                    key = prompt("Pour utiliser l'IA, entrez votre clé API Gemini (Google) :\n(Elle sera stockée localement dans votre navigateur)");
-                    if (key) localStorage.setItem('gemini_api_key', key);
+            openApiKeyModal() {
+                uiManager.openGenericModal('Activer l\'IA (Gemini)', `
+                    <div class="space-y-4">
+                        <p class="text-sm text-slate-500 dark:text-slate-400">
+                            Pour analyser vos photos, vous avez besoin d'une clé API Gemini (Google).<br>
+                            C'est gratuit et sécurisé (stocké sur votre appareil).
+                        </p>
+                        <ol class="list-decimal list-inside text-sm text-slate-600 dark:text-slate-300 space-y-2">
+                            <li>Allez sur <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-brand-600 font-bold hover:underline">aistudio.google.com</a></li>
+                            <li>Cliquez sur <b>Create API key</b></li>
+                            <li>Copiez la clé (commence par "AIza")</li>
+                        </ol>
+                        <input id="input-api-key" type="text" placeholder="Collez votre clé API ici..." class="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:text-white font-mono text-sm">
+                        <button onclick="editorManager.saveApiKey()" class="w-full bg-brand-600 text-white font-bold p-3 rounded-xl hover:bg-brand-700 transition-colors">
+                            Enregistrer et Activer
+                        </button>
+                    </div>
+                `);
+            },
+
+            saveApiKey() {
+                const input = document.getElementById('input-api-key');
+                let key = input.value.trim();
+                // Basic cleanup
+                key = key.replace(/^"|"$/g, '').replace(/^'|'$/g, '');
+
+                if (!key.startsWith('AIza')) {
+                    alert("⚠️ Cette clé ne semble pas valide.\nElle doit commencer par 'AIza'.");
+                    return;
                 }
-                return key;
+
+                localStorage.setItem('gemini_api_key', key);
+                uiManager.closeGenericModal();
+                alert("✅ Clé enregistrée ! Vous pouvez maintenant prendre une photo.");
             },
 
             fileToBase64(file) {
@@ -2672,7 +2703,8 @@ Exemple :
                     div.className = "mt-8 pt-8 border-t border-slate-200 dark:border-slate-700";
                     div.innerHTML = `
                         <h3 class="font-bold mb-4 dark:text-white">Intelligence Artificielle</h3>
-                        <button id="btn-reset-key" onclick="localStorage.removeItem('gemini_api_key'); alert('Clé API supprimée ! Lancez une analyse photo pour en entrer une nouvelle.');" 
+                        <h3 class="font-bold mb-4 dark:text-white">Intelligence Artificielle</h3>
+                        <button id="btn-reset-key" onclick="editorManager.openApiKeyModal()" 
                             class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl font-bold hover:bg-slate-300 transition-colors">
                             <i class="fa-solid fa-key mr-2"></i> Changer la clé API Gemini
                         </button>
