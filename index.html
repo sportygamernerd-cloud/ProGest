@@ -2045,27 +2045,31 @@
 
         window.editorManager = {
             // CONFIGURATION IA (SYSTEM PROMPT)
-            AI_PROMPT: `Tu es un artisan français expérimenté.
+            AI_PROMPT: `Tu es un expert du bâtiment et artisan tous corps d'état chevronné.
 
-À partir de cette photo de chantier :
-1. Dis quel type de prestation est nécessaire.
-2. Rédige un devis simple et professionnel en français.
-3. Utilise des phrases claires compréhensibles par un client.
+TA MISSION :
+Analyser cette photo de chantier dans les moindres détails pour établir un DEVIS ESTIMATIF COMPLET.
+Tu dois être proactif : si tu vois une pièce délabrée, chiffrer la dépose, la préparation (enduit/ragréage) et la finition.
 
-Ne parle pas de toi.
-Ne parle pas d’IA.
-Reste réaliste et prudent.
-            
-IMPORTANT : Tu dois répondre UNIQUEMENT au format JSON strict, sans markdown, sans explication.
+CONSIGNES PRÉCISES :
+1. Identifie TOUS les corps de métier nécessaires (Plomberie, Électricité, Placo, Peinture, Sol).
+2. Sépare bien les tâches : par exemple "Dépose ancien lavabo" ET "Fourniture et pose nouveau meuble vasque".
+3. Sois technique mais clair : Utilise des termes pro ("Dépose", "Ragréage", "Mise en sécurité", "Couche d'impression").
+4. Ne rate rien : Prises, interrupteurs, état des murs, sol, plafond.
+
+Ne parle pas de toi. Ne dis pas "Je vois". Remplis juste le devis.
+Reste réaliste sur les prix.`,
+
+            IMPORTANT: Tu dois répondre UNIQUEMENT au format JSON strict, sans markdown, sans explication.
 Le format attendu est une liste d'objets JSON :
 [
-  { "d": "Description de la prestation", "q": Quantité(nombre), "p": PrixUnitaire(nombre) }
-]
-Exemple :
-[
-  { "d": "Remplacement prise secteur défectueuse", "q": 1, "p": 45 },
-  { "d": "Reprise enduit mur", "q": 10, "p": 35 }
-]`,
+                    { "d": "Description de la prestation", "q": Quantité(nombre), "p": PrixUnitaire(nombre) }
+                ]
+Exemple:
+                [
+                    { "d": "Remplacement prise secteur défectueuse", "q": 1, "p": 45 },
+                    { "d": "Reprise enduit mur", "q": 10, "p": 35 }
+                ]`,
 
             lines: [],
             marketPrices: {
@@ -2144,7 +2148,7 @@ Exemple :
 
             openApiKeyModal() {
                 uiManager.openGenericModal('Activer l\'IA (Gemini)', `
-                    <div class="space-y-4">
+                < div class= "space-y-4" >
                         <p class="text-sm text-slate-500 dark:text-slate-400">
                             Pour analyser vos photos, vous avez besoin d'une clé API Gemini (Google).<br>
                             C'est gratuit et sécurisé (stocké sur votre appareil).
@@ -2194,70 +2198,70 @@ Exemple :
             async callGeminiAPI(key, imageBase64) {
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
 
-                const body = {
-                    contents: [{
-                        parts: [
-                            { text: this.AI_PROMPT },
-                            { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
-                        ]
-                    }]
-                };
+        const body = {
+            contents: [{
+                parts: [
+                    { text: this.AI_PROMPT },
+                    { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
+                ]
+            }]
+        };
 
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
 
-                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+        if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
 
-                const data = await response.json();
+        const data = await response.json();
 
-                // Extract Text
-                const text = data.candidates[0].content.parts[0].text;
+        // Extract Text
+        const text = data.candidates[0].content.parts[0].text;
 
-                // Clean Markdown if present (```json ... ```)
-                const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        // Clean Markdown if present (```json ... ```)
+        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-                return JSON.parse(cleanText);
+        return JSON.parse(cleanText);
             },
-            init() {
-                this.lines = [{ d: '', q: 1, p: 0, tva: 0.2 }];
-                this.renderLines();
-                document.getElementById('editor-date').valueAsDate = new Date();
+        init() {
+            this.lines = [{ d: '', q: 1, p: 0, tva: 0.2 }];
+            this.renderLines();
+            document.getElementById('editor-date').valueAsDate = new Date();
 
-                // Reset signature logic
-                window.signatureManager.clear();
-                document.getElementById('signature-preview-banner').classList.add('hidden');
-                document.getElementById('signature-preview-img').src = '';
-            },
+            // Reset signature logic
+            window.signatureManager.clear();
+            document.getElementById('signature-preview-banner').classList.add('hidden');
+            document.getElementById('signature-preview-img').src = '';
+        },
 
-            updateTotals() {
-                let ht = 0, tvaTotal = 0;
-                this.lines.forEach(l => {
-                    ht += l.q * l.p;
-                    tvaTotal += (l.q * l.p) * l.tva;
-                });
-                document.getElementById('editor-total-ht').innerText = ht.toFixed(2) + '€';
-                document.getElementById('editor-total-tva').innerText = tvaTotal.toFixed(2) + '€';
-                document.getElementById('editor-total-ttc').innerText = (ht + tvaTotal).toFixed(2) + '€';
-            },
+        updateTotals() {
+            let ht = 0, tvaTotal = 0;
+            this.lines.forEach(l => {
+                ht += l.q * l.p;
+                tvaTotal += (l.q * l.p) * l.tva;
+            });
+            document.getElementById('editor-total-ht').innerText = ht.toFixed(2) + '€';
+            document.getElementById('editor-total-tva').innerText = tvaTotal.toFixed(2) + '€';
+            document.getElementById('editor-total-ttc').innerText = (ht + tvaTotal).toFixed(2) + '€';
+        },
 
-            renderLines() {
-                const e = document.getElementById('editor-lines');
-                e.innerHTML = '';
-                this.lines.forEach((l, i) => {
-                    // SMART MARGIN CHECK
-                    let warning = '';
-                    const lowerDesc = l.d.toLowerCase();
-                    for (const [key, refPrice] of Object.entries(this.marketPrices)) {
-                        if (lowerDesc.includes(key) && l.p > 0 && l.p < refPrice * 0.8) {
-                            warning = `<div class="absolute -top-2 -right-2 bg-amber-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-lg animate-bounce cursor-pointer z-10" onclick="alert('⚠️ Marge Faible détectée !\\n\\nPrix marché : ${refPrice}€\\nVotre prix : ${l.p}€\\n\\nConseil : Augmentez votre prix pour garantir votre rentabilité.')"><i class="fa-solid fa-triangle-exclamation"></i></div>`;
-                            break;
-                        }
+        renderLines() {
+            const e = document.getElementById('editor-lines');
+            e.innerHTML = '';
+            this.lines.forEach((l, i) => {
+                // SMART MARGIN CHECK
+                let warning = '';
+                const lowerDesc = l.d.toLowerCase();
+                for (const [key, refPrice] of Object.entries(this.marketPrices)) {
+                    if (lowerDesc.includes(key) && l.p > 0 && l.p < refPrice * 0.8) {
+                        warning = `<div class="absolute -top-2 -right-2 bg-amber-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-lg animate-bounce cursor-pointer z-10" onclick="alert('⚠️ Marge Faible détectée !\\n\\nPrix marché : ${refPrice}€\\nVotre prix : ${l.p}€\\n\\nConseil : Augmentez votre prix pour garantir votre rentabilité.')"><i class="fa-solid fa-triangle-exclamation"></i></div>`;
+                        break;
                     }
+                }
 
-                    e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2 relative">
+                e.innerHTML += `<div class="glass p-3 rounded-xl flex gap-2 items-center flex-wrap mb-2 relative">
                         ${warning}
                         <button onclick="editorManager.removeLine(${i})" class="text-red-500 px-2"><i class="fa-solid fa-times"></i></button>
                         <div class="flex-1 flex items-center gap-2 min-w-[150px] bg-slate-50 dark:bg-slate-800/50 rounded-lg px-2 border border-transparent focus-within:border-brand-500 transition-colors">
@@ -2268,263 +2272,263 @@ Exemple :
                         <input class="w-20 text-right bg-slate-100 dark:bg-slate-800 rounded p-1 dark:text-white text-slate-900 font-bold" type="number" value="${l.p}" oninput="editorManager.up(${i},'p',this.value)">
                         <select class="w-16 bg-slate-100 dark:bg-slate-800 rounded p-1 text-xs dark:text-white" onchange="editorManager.up(${i},'tva',this.value)"><option value="0.2" ${l.tva == 0.2 ? 'selected' : ''}>20%</option><option value="0.1" ${l.tva == 0.1 ? 'selected' : ''}>10%</option><option value="0.055" ${l.tva == 0.055 ? 'selected' : ''}>5.5%</option></select>
                     </div>`;
-                });
-                this.updateTotals();
-            },
+            });
+            this.updateTotals();
+        },
 
-            // SMART DICTATION (GLOBAL)
-            recognition: null,
+        // SMART DICTATION (GLOBAL)
+        recognition: null,
             isRecording: false,
-            originalBtnContent: null, // Added to store original button content
+                originalBtnContent: null, // Added to store original button content
 
-            startSmartDictation() {
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return alert("Navigateur non compatible");
+                    startSmartDictation() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return alert("Navigateur non compatible");
 
-                // STOP IF RECORDING
-                if (this.isRecording && this.recognition) {
-                    this.recognition.stop();
-                    this.isRecording = false; // Set to false immediately
-                    return;
-                }
+            // STOP IF RECORDING
+            if (this.isRecording && this.recognition) {
+                this.recognition.stop();
+                this.isRecording = false; // Set to false immediately
+                return;
+            }
 
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                this.recognition = new SpeechRecognition();
-                this.recognition.lang = 'fr-FR';
-                this.recognition.interimResults = false;
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.recognition = new SpeechRecognition();
+            this.recognition.lang = 'fr-FR';
+            this.recognition.interimResults = false;
 
-                const btn = document.getElementById('btn-smart-mic');
-                // Store original content only if not already recording (to avoid overwriting with "Appuyez pour arrêter")
-                if (!this.originalBtnContent) this.originalBtnContent = btn.innerHTML;
+            const btn = document.getElementById('btn-smart-mic');
+            // Store original content only if not already recording (to avoid overwriting with "Appuyez pour arrêter")
+            if (!this.originalBtnContent) this.originalBtnContent = btn.innerHTML;
 
-                btn.classList.remove('from-brand-600', 'to-brand-500');
-                btn.classList.add('animate-pulse', 'bg-red-500');
-                btn.innerHTML = '<i class="fa-solid fa-microphone-lines text-4xl animate-bounce"></i><span class="font-bold mt-2">Appuyez pour arrêter</span>';
+            btn.classList.remove('from-brand-600', 'to-brand-500');
+            btn.classList.add('animate-pulse', 'bg-red-500');
+            btn.innerHTML = '<i class="fa-solid fa-microphone-lines text-4xl animate-bounce"></i><span class="font-bold mt-2">Appuyez pour arrêter</span>';
 
-                this.isRecording = true;
-                this.recognition.start();
+            this.isRecording = true;
+            this.recognition.start();
 
-                this.recognition.onresult = (e) => {
-                    const text = e.results[0][0].transcript;
-                    this.analyzeAndAdd(text);
-                };
+            this.recognition.onresult = (e) => {
+                const text = e.results[0][0].transcript;
+                this.analyzeAndAdd(text);
+            };
 
-                this.recognition.onend = () => {
-                    this.isRecording = false;
-                    btn.classList.remove('animate-pulse', 'bg-red-500');
-                    btn.classList.add('from-brand-600', 'to-brand-500');
-                    btn.innerHTML = this.originalBtnContent;
-                };
+            this.recognition.onend = () => {
+                this.isRecording = false;
+                btn.classList.remove('animate-pulse', 'bg-red-500');
+                btn.classList.add('from-brand-600', 'to-brand-500');
+                btn.innerHTML = this.originalBtnContent;
+            };
 
-                this.recognition.onerror = (e) => {
-                    console.error(e);
-                    btn.innerHTML = originalContent;
-                    alert("Erreur: " + e.error);
-                };
-            },
+            this.recognition.onerror = (e) => {
+                console.error(e);
+                btn.innerHTML = originalContent;
+                alert("Erreur: " + e.error);
+            };
+        },
 
-            analyzeAndAdd(text) {
-                console.log("Analyzing:", text);
-                const keywords = [
-                    { k: 'prise', l: 'Pose Prise de Courant', p: 25 },
-                    { k: 'interrupteur', l: 'Pose Interrupteur', p: 20 },
-                    { k: 'tableau', l: 'Remplacement Tableau Électrique', p: 150 },
-                    { k: 'peinture', l: 'Forfait Peinture (m²)', p: 35 },
-                    { k: 'robinet', l: 'Remplacement Robinet', p: 80 },
-                    { k: 'wc', l: 'Pose WC Suspendu', p: 250 },
-                    { k: 'lavabo', l: 'Pose Lavabo', p: 120 },
-                    { k: 'douche', l: 'Installation Douche', p: 450 },
-                    { k: 'placo', l: 'Pose Placo (m²)', p: 45 },
-                    { k: 'carrelage', l: 'Pose Carrelage (m²)', p: 55 }
-                ];
+        analyzeAndAdd(text) {
+            console.log("Analyzing:", text);
+            const keywords = [
+                { k: 'prise', l: 'Pose Prise de Courant', p: 25 },
+                { k: 'interrupteur', l: 'Pose Interrupteur', p: 20 },
+                { k: 'tableau', l: 'Remplacement Tableau Électrique', p: 150 },
+                { k: 'peinture', l: 'Forfait Peinture (m²)', p: 35 },
+                { k: 'robinet', l: 'Remplacement Robinet', p: 80 },
+                { k: 'wc', l: 'Pose WC Suspendu', p: 250 },
+                { k: 'lavabo', l: 'Pose Lavabo', p: 120 },
+                { k: 'douche', l: 'Installation Douche', p: 450 },
+                { k: 'placo', l: 'Pose Placo (m²)', p: 45 },
+                { k: 'carrelage', l: 'Pose Carrelage (m²)', p: 55 }
+            ];
 
-                let found = false;
-                const lowerText = text.toLowerCase();
+            let found = false;
+            const lowerText = text.toLowerCase();
 
-                keywords.forEach(item => {
-                    // Check for singular or plural (simple check)
-                    if (lowerText.includes(item.k)) {
-                        // Try to find quantity: "3 prises"
-                        // Regex: look for number before the keyword
-                        const regex = new RegExp(`(\\d+)\\s*\\w*\\s*${item.k}`, 'i');
-                        const match = lowerText.match(regex);
-                        const qty = match ? parseInt(match[1]) : 1;
+            keywords.forEach(item => {
+                // Check for singular or plural (simple check)
+                if (lowerText.includes(item.k)) {
+                    // Try to find quantity: "3 prises"
+                    // Regex: look for number before the keyword
+                    const regex = new RegExp(`(\\d+)\\s*\\w*\\s*${item.k}`, 'i');
+                    const match = lowerText.match(regex);
+                    const qty = match ? parseInt(match[1]) : 1;
 
-                        // Check if we already have an empty line at the start (default) and remove it if it's the only one
-                        if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) {
-                            this.lines = [];
-                        }
-
-                        this.lines.push({ d: item.l, q: qty, p: item.p, tva: 0.2 });
-                        found = true;
-                    }
-                });
-
-                if (!found) {
-                    // No keyword? Add raw text
+                    // Check if we already have an empty line at the start (default) and remove it if it's the only one
                     if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) {
                         this.lines = [];
                     }
-                    this.lines.push({ d: text.charAt(0).toUpperCase() + text.slice(1), q: 1, p: 0, tva: 0.2 });
+
+                    this.lines.push({ d: item.l, q: qty, p: item.p, tva: 0.2 });
+                    found = true;
                 }
+            });
+
+            if (!found) {
+                // No keyword? Add raw text
+                if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) {
+                    this.lines = [];
+                }
+                this.lines.push({ d: text.charAt(0).toUpperCase() + text.slice(1), q: 1, p: 0, tva: 0.2 });
+            }
+
+            this.renderLines();
+            DataService.incrementCounter('quotes');
+            alert(`🗣️ Analyse terminée !\n\nJ'ai compris : "${text}"`);
+        },
+
+        // VOICE DICTATION
+        startDictation(i) {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert("Votre navigateur ne supporte pas la dictée vocale. Essayez Chrome ou Safari.");
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            const btn = document.querySelector(`button[onclick="editorManager.startDictation(${i})"]`);
+            const icon = btn.querySelector('i');
+
+            // Visual feedback
+            icon.className = "fa-solid fa-microphone-lines text-red-500 animate-pulse";
+
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                console.log('Dictée:', text);
+
+                // SIMPLE PARSING LOGIC
+                // Ex: "Peinture salon 500 euros" -> Desc: "Peinture salon", Price: 500
+                let desc = text;
+                let price = 0;
+
+                // Try to find price at the end
+                const priceMatch = text.match(/(\d+)\s?(euros?|€)/i);
+                if (priceMatch) {
+                    price = parseFloat(priceMatch[1]);
+                    desc = text.replace(priceMatch[0], '').trim();
+                }
+
+                // Update Line
+                const currentDesc = this.lines[i].d;
+                this.lines[i].d = currentDesc ? currentDesc + ' ' + desc : desc;
+                if (price > 0) this.lines[i].p = price;
 
                 this.renderLines();
-                DataService.incrementCounter('quotes');
-                alert(`🗣️ Analyse terminée !\n\nJ'ai compris : "${text}"`);
-            },
+            };
 
-            // VOICE DICTATION
-            startDictation(i) {
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    alert("Votre navigateur ne supporte pas la dictée vocale. Essayez Chrome ou Safari.");
-                    return;
-                }
+            recognition.onend = () => {
+                // Reset icon
+                // Since renderLines is called in onresult, the button is re-rendered, so we don't strictly need to reset class here if successful.
+                // But if no result (silence), we should reset.
+                if (icon) icon.className = "fa-solid fa-microphone";
+            };
 
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'fr-FR';
-                recognition.interimResults = false;
-                recognition.maxAlternatives = 1;
-
-                const btn = document.querySelector(`button[onclick="editorManager.startDictation(${i})"]`);
-                const icon = btn.querySelector('i');
-
-                // Visual feedback
-                icon.className = "fa-solid fa-microphone-lines text-red-500 animate-pulse";
-
-                recognition.start();
-
-                recognition.onresult = (event) => {
-                    const text = event.results[0][0].transcript;
-                    console.log('Dictée:', text);
-
-                    // SIMPLE PARSING LOGIC
-                    // Ex: "Peinture salon 500 euros" -> Desc: "Peinture salon", Price: 500
-                    let desc = text;
-                    let price = 0;
-
-                    // Try to find price at the end
-                    const priceMatch = text.match(/(\d+)\s?(euros?|€)/i);
-                    if (priceMatch) {
-                        price = parseFloat(priceMatch[1]);
-                        desc = text.replace(priceMatch[0], '').trim();
-                    }
-
-                    // Update Line
-                    const currentDesc = this.lines[i].d;
-                    this.lines[i].d = currentDesc ? currentDesc + ' ' + desc : desc;
-                    if (price > 0) this.lines[i].p = price;
-
-                    this.renderLines();
-                };
-
-                recognition.onend = () => {
-                    // Reset icon
-                    // Since renderLines is called in onresult, the button is re-rendered, so we don't strictly need to reset class here if successful.
-                    // But if no result (silence), we should reset.
-                    if (icon) icon.className = "fa-solid fa-microphone";
-                };
-
-                recognition.onerror = (event) => {
-                    console.error('Speech error', event.error);
-                    alert("Erreur micro : " + event.error);
-                    if (icon) icon.className = "fa-solid fa-microphone";
-                };
-            },
-            up(i, k, v) { this.lines[i][k] = k === 'd' ? v : parseFloat(v) || 0; this.updateTotals(); },
-            addLine() { this.lines.push({ d: '', q: 1, p: 0, tva: 0.2 }); this.renderLines(); },
-            removeLine(i) { if (this.lines.length > 1) { this.lines.splice(i, 1); this.renderLines(); } },
+            recognition.onerror = (event) => {
+                console.error('Speech error', event.error);
+                alert("Erreur micro : " + event.error);
+                if (icon) icon.className = "fa-solid fa-microphone";
+            };
+        },
+        up(i, k, v) { this.lines[i][k] = k === 'd' ? v : parseFloat(v) || 0; this.updateTotals(); },
+        addLine() { this.lines.push({ d: '', q: 1, p: 0, tva: 0.2 }); this.renderLines(); },
+        removeLine(i) { if (this.lines.length > 1) { this.lines.splice(i, 1); this.renderLines(); } },
             async saveDocument() {
-                const clientName = document.getElementById('editor-client-preview').innerText;
-                if (clientName === "Sélectionner...") return alert('Veuillez sélectionner un client');
+            const clientName = document.getElementById('editor-client-preview').innerText;
+            if (clientName === "Sélectionner...") return alert('Veuillez sélectionner un client');
 
-                const b = document.querySelector('button[onclick="editorManager.saveDocument()"]');
-                const t = b.innerHTML; b.innerHTML = '...'; b.disabled = true;
+            const b = document.querySelector('button[onclick="editorManager.saveDocument()"]');
+            const t = b.innerHTML; b.innerHTML = '...'; b.disabled = true;
 
-                let ht = 0, tva = 0;
-                this.lines.forEach(l => { ht += l.q * l.p; tva += (l.q * l.p) * l.tva; });
+            let ht = 0, tva = 0;
+            this.lines.forEach(l => { ht += l.q * l.p; tva += (l.q * l.p) * l.tva; });
 
-                // Get Signature
-                const sigData = window.signatureManager.currentSignatureData;
+            // Get Signature
+            const sigData = window.signatureManager.currentSignatureData;
 
-                await DataService.add('docs', {
-                    type: 'devis', date: new Date().toISOString(),
-                    clientName: clientName, lines: this.lines,
-                    ht, ttc: ht + tva, status: sigData ? 'signed' : 'draft',
-                    signature: sigData
-                });
+            await DataService.add('docs', {
+                type: 'devis', date: new Date().toISOString(),
+                clientName: clientName, lines: this.lines,
+                ht, ttc: ht + tva, status: sigData ? 'signed' : 'draft',
+                signature: sigData
+            });
 
-                // TRACK SAVINGS
-                DataService.incrementCounter('quotes');
+            // TRACK SAVINGS
+            DataService.incrementCounter('quotes');
 
-                b.innerHTML = t; b.disabled = false;
-                alert('Sauvegardé !'); router.navigate('home');
-            },
-            openLibraryModal() { window.uiManager.openGenericModal('Bibliothèque', '<div id="modal-lib-list">...</div>'); window.itemManager.render(true); },
-            importItem(t, p) { this.lines.push({ d: t, q: 1, p, tva: 0.2 }); this.renderLines(); window.uiManager.closeGenericModal(); },
+            b.innerHTML = t; b.disabled = false;
+            alert('Sauvegardé !'); router.navigate('home');
+        },
+        openLibraryModal() { window.uiManager.openGenericModal('Bibliothèque', '<div id="modal-lib-list">...</div>'); window.itemManager.render(true); },
+        importItem(t, p) { this.lines.push({ d: t, q: 1, p, tva: 0.2 }); this.renderLines(); window.uiManager.closeGenericModal(); },
 
             // PRINT LOGIC (UPDATED WITH LEGAL, VAT & SIGNATURE)
             async print() {
-                try {
-                    const client = document.getElementById('editor-client-preview').innerText;
-                    if (client === "Sélectionner...") return alert("Choisissez un client");
+            try {
+                const client = document.getElementById('editor-client-preview').innerText;
+                if (client === "Sélectionner...") return alert("Choisissez un client");
 
-                    // Get Settings for Logo & Legal
-                    const s = await DataService.get('settings');
-                    const conf = s[0] || {};
+                // Get Settings for Logo & Legal
+                const s = await DataService.get('settings');
+                const conf = s[0] || {};
 
-                    document.getElementById('print-client-name').innerText = client;
-                    document.getElementById('print-date').innerText = new Date().toLocaleDateString();
-                    document.getElementById('print-ref').innerText = 'D-' + Date.now().toString().substr(-4);
+                document.getElementById('print-client-name').innerText = client;
+                document.getElementById('print-date').innerText = new Date().toLocaleDateString();
+                document.getElementById('print-ref').innerText = 'D-' + Date.now().toString().substr(-4);
 
-                    // Legal Info Header
-                    let legal = `${conf.company || 'Mon Entreprise'}\nSIRET: ${conf.siret || 'Non renseigné'}\n${conf.address || ''}\nTVA Intra: ${conf.tvaintra || 'Non renseigné'}`;
-                    document.getElementById('print-company-info').innerText = legal;
+                // Legal Info Header
+                let legal = `${conf.company || 'Mon Entreprise'}\nSIRET: ${conf.siret || 'Non renseigné'}\n${conf.address || ''}\nTVA Intra: ${conf.tvaintra || 'Non renseigné'}`;
+                document.getElementById('print-company-info').innerText = legal;
 
-                    // Legal Footer
-                    document.getElementById('print-legal-footer').innerText = `Assurance Décennale: ${conf.decennale || 'Non renseignée'} - Mention RGE: ${conf.rge || 'Non applicable'}`;
+                // Legal Footer
+                document.getElementById('print-legal-footer').innerText = `Assurance Décennale: ${conf.decennale || 'Non renseignée'} - Mention RGE: ${conf.rge || 'Non applicable'}`;
 
-                    // LOGO
-                    const logoImg = document.getElementById('print-logo');
-                    if (conf.logo) {
-                        logoImg.src = conf.logo;
-                        logoImg.classList.remove('hidden');
-                    } else {
-                        logoImg.classList.add('hidden');
-                    }
-
-                    // SIGNATURE IN PRINT
-                    const sigData = window.signatureManager.currentSignatureData;
-                    const sigImgPrint = document.getElementById('print-signature-img');
-                    const sigDatePrint = document.getElementById('print-signature-date');
-
-                    if (sigData) {
-                        sigImgPrint.src = sigData;
-                        sigImgPrint.classList.remove('hidden');
-                        sigDatePrint.innerText = "Signé numériquement le " + new Date().toLocaleDateString();
-                        sigDatePrint.classList.remove('hidden');
-                    } else {
-                        sigImgPrint.classList.add('hidden');
-                        sigDatePrint.classList.add('hidden');
-                    }
-
-                    // Lines
-                    const tbody = document.getElementById('print-lines');
-                    tbody.innerHTML = '';
-                    this.lines.forEach(l => {
-                        const tvaPct = (l.tva * 100).toFixed(1) + '%';
-                        tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="py-3 px-4">${l.d}</td><td class="text-center">${l.q}</td><td class="text-center text-xs text-slate-500">${tvaPct}</td><td class="text-right">${l.p}€</td><td class="text-right font-bold">${(l.q * l.p).toFixed(2)}€</td></tr>`;
-                    });
-
-                    document.getElementById('print-ht').innerText = document.getElementById('editor-total-ht').innerText;
-                    document.getElementById('print-tva').innerText = document.getElementById('editor-total-tva').innerText;
-                    document.getElementById('print-ttc').innerText = document.getElementById('editor-total-ttc').innerText;
-
-                    window.print();
-                } catch (e) {
-                    console.error("Print Error:", e);
-                    alert("Erreur lors de l'impression: " + e.message);
+                // LOGO
+                const logoImg = document.getElementById('print-logo');
+                if (conf.logo) {
+                    logoImg.src = conf.logo;
+                    logoImg.classList.remove('hidden');
+                } else {
+                    logoImg.classList.add('hidden');
                 }
+
+                // SIGNATURE IN PRINT
+                const sigData = window.signatureManager.currentSignatureData;
+                const sigImgPrint = document.getElementById('print-signature-img');
+                const sigDatePrint = document.getElementById('print-signature-date');
+
+                if (sigData) {
+                    sigImgPrint.src = sigData;
+                    sigImgPrint.classList.remove('hidden');
+                    sigDatePrint.innerText = "Signé numériquement le " + new Date().toLocaleDateString();
+                    sigDatePrint.classList.remove('hidden');
+                } else {
+                    sigImgPrint.classList.add('hidden');
+                    sigDatePrint.classList.add('hidden');
+                }
+
+                // Lines
+                const tbody = document.getElementById('print-lines');
+                tbody.innerHTML = '';
+                this.lines.forEach(l => {
+                    const tvaPct = (l.tva * 100).toFixed(1) + '%';
+                    tbody.innerHTML += `<tr class="border-b border-slate-100"><td class="py-3 px-4">${l.d}</td><td class="text-center">${l.q}</td><td class="text-center text-xs text-slate-500">${tvaPct}</td><td class="text-right">${l.p}€</td><td class="text-right font-bold">${(l.q * l.p).toFixed(2)}€</td></tr>`;
+                });
+
+                document.getElementById('print-ht').innerText = document.getElementById('editor-total-ht').innerText;
+                document.getElementById('print-tva').innerText = document.getElementById('editor-total-tva').innerText;
+                document.getElementById('print-ttc').innerText = document.getElementById('editor-total-ttc').innerText;
+
+                window.print();
+            } catch (e) {
+                console.error("Print Error:", e);
+                alert("Erreur lors de l'impression: " + e.message);
             }
+        }
         };
 
         const clientManager = {
