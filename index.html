@@ -1587,34 +1587,58 @@
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
                 const errorDiv = document.getElementById('login-error');
+                const btn = document.querySelector('#view-login .btn-action');
+                const originalBtnContent = btn.innerHTML;
+
+                console.log("👉 Login Clicked:", email);
 
                 if (!email || !password) return alert("Veuillez remplir l'email et le mot de passe.");
-                if (!auth) return alert("Erreur: Firebase non initialisé");
+                if (!auth) {
+                    console.error("❌ Auth object is missing!");
+                    return alert("Erreur CRITIQUE : Firebase n'est pas chargé. Vérifiez votre connexion.");
+                }
 
-                errorDiv.classList.add('hidden');
+                if (errorDiv) errorDiv.classList.add('hidden');
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Connexion...';
+                btn.disabled = true;
 
                 try {
                     // 0. Persistence Config
+                    console.log("🔐 Setting Persistence...");
                     const remember = document.getElementById('login-remember').checked;
                     await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
 
-                    // 1. On essaie de CRÉER le compte (c'est une landing page, donc priorité aux nouveaux)
+                    // 1. CREATE Attempt
+                    console.log("🆕 Attempting Creation...");
                     await createUserWithEmailAndPassword(auth, email, password);
+                    console.log("✅ Created Successfully");
+
                 } catch (e) {
-                    console.log("Create failed, trying login...", e.code);
-                    // 2. Si l'email existe déjà OU si autre erreur de création, on essaie de se CONNECTER
-                    // (C'est plus robuste que de juste vérifier 'email-already-in-use')
+                    console.log("⚠️ Creation failed, trying LOGIN...", e.code);
+
                     try {
+                        // 2. LOGIN Attempt
+                        console.log("🔑 Attempting Sign In...");
                         await signInWithEmailAndPassword(auth, email, password);
+                        console.log("✅ Logged in Successfully");
                     } catch (loginErr) {
-                        console.error(loginErr);
-                        // Vraie erreur de connexion
-                        if (loginErr.code === 'auth/invalid-credential' || loginErr.code === 'auth/wrong-password') {
-                            errorDiv.innerText = "Email ou mot de passe incorrect.";
+                        console.error("❌ Login Failed:", loginErr);
+
+                        btn.innerHTML = originalBtnContent;
+                        btn.disabled = false;
+
+                        if (errorDiv) {
+                            if (loginErr.code === 'auth/invalid-credential' || loginErr.code === 'auth/wrong-password') {
+                                errorDiv.innerText = "Email ou mot de passe incorrect.";
+                            } else if (loginErr.code === 'auth/too-many-requests') {
+                                errorDiv.innerText = "Trop de tentatives. Réessayez plus tard.";
+                            } else {
+                                errorDiv.innerText = "Erreur: " + loginErr.message;
+                            }
+                            errorDiv.classList.remove('hidden');
                         } else {
-                            errorDiv.innerText = "Erreur: " + loginErr.message;
+                            alert("Erreur Connexion : " + loginErr.message);
                         }
-                        errorDiv.classList.remove('hidden');
                     }
                 }
             },
