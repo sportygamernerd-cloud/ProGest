@@ -2041,7 +2041,18 @@
 
 Ne parle pas de toi.
 Ne parle pas d’IA.
-Reste réaliste et prudent.`,
+Reste réaliste et prudent.
+            
+IMPORTANT : Tu dois répondre UNIQUEMENT au format JSON strict, sans markdown, sans explication.
+Le format attendu est une liste d'objets JSON :
+[
+  { "d": "Description de la prestation", "q": Quantité(nombre), "p": PrixUnitaire(nombre) }
+]
+Exemple :
+[
+  { "d": "Remplacement prise secteur défectueuse", "q": 1, "p": 45 },
+  { "d": "Reprise enduit mur", "q": 10, "p": 35 }
+]`,
 
             lines: [],
             marketPrices: {
@@ -2051,24 +2062,100 @@ Reste réaliste et prudent.`,
                 if (input.files && input.files[0]) {
                     const btn = input.previousElementSibling;
                     const originalContent = btn.innerHTML;
-                    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl"></i><span class="font-bold text-sm">Analyse IA...</span>';
 
-                    // SIMULATION APPEL IA
-                    console.log("🚀 Envoi à l'IA avec le prompt :", this.AI_PROMPT);
+                    // 1. Get API Key
+                    const apiKey = this.getGeminiKey();
+                    if (!apiKey) return;
 
-                    await new Promise(r => setTimeout(r, 2500));
-                    const mockResults = [
-                        { d: 'Rénovation Mur (Dégradé)', q: 15, p: 45 },
-                        { d: 'Pose Prise de Courant (Manquante)', q: 3, p: 25 },
-                        { d: 'Peinture Plafond (Tache)', q: 1, p: 120 }
-                    ];
-                    if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) this.lines = [];
-                    mockResults.forEach(r => this.lines.push({ ...r, tva: 0.2 }));
-                    this.renderLines();
-                    DataService.incrementCounter('quotes');
-                    btn.innerHTML = originalContent;
-                    alert("📸 Analyse terminée !\n\nL'IA a détecté :\n- Des dégradations sur les murs\n- Des prises manquantes\n- Une tache au plafond\n\nLe devis a été pré-rempli.");
+                    try {
+                        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-2xl"></i><span class="font-bold text-sm">IA réfléchit...</span>';
+
+                        // 2. Convert Image
+                        const base64Image = await this.fileToBase64(input.files[0]);
+
+                        // 3. Call Gemini
+                        const jsonResponse = await this.callGeminiAPI(apiKey, base64Image);
+
+                        // 4. Parse Results
+                        console.log("IA Response:", jsonResponse);
+
+                        if (this.lines.length === 1 && this.lines[0].d === '' && this.lines[0].p === 0) this.lines = [];
+
+                        jsonResponse.forEach(r => {
+                            // Validate data
+                            if (r.d && r.p) {
+                                this.lines.push({
+                                    d: r.d,
+                                    q: parseInt(r.q) || 1,
+                                    p: parseFloat(r.p) || 0,
+                                    tva: 0.2
+                                });
+                            }
+                        });
+
+                        this.renderLines();
+                        DataService.incrementCounter('quotes');
+                        alert("📸 Analyse terminée ! Le devis a été généré via Gemini Pro Vision.");
+                    } catch (e) {
+                        console.error(e);
+                        alert("Erreur IA : " + e.message);
+                    } finally {
+                        btn.innerHTML = originalContent;
+                    }
                 }
+            },
+
+            getGeminiKey() {
+                let key = localStorage.getItem('gemini_api_key');
+                if (!key) {
+                    key = prompt("Pour utiliser l'IA, entrez votre clé API Gemini (Google) :\n(Elle sera stockée localement dans votre navigateur)");
+                    if (key) localStorage.setItem('gemini_api_key', key);
+                }
+                return key;
+            },
+
+            fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => {
+                        // Remove data:image/xxx;base64, prefix
+                        const base64String = reader.result.split(',')[1];
+                        resolve(base64String);
+                    };
+                    reader.onerror = error => reject(error);
+                });
+            },
+
+            async callGeminiAPI(key, imageBase64) {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+
+                const body = {
+                    contents: [{
+                        parts: [
+                            { text: this.AI_PROMPT },
+                            { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
+                        ]
+                    }]
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+
+                const data = await response.json();
+
+                // Extract Text
+                const text = data.candidates[0].content.parts[0].text;
+
+                // Clean Markdown if present (```json ... ```)
+                const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+                return JSON.parse(cleanText);
             },
             init() {
                 this.lines = [{ d: '', q: 1, p: 0, tva: 0.2 }];
