@@ -314,7 +314,14 @@ IMPORTANT : Réponds UNIQUEMENT au format JSON strict :
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: this.AI_PROMPT, imageBase64: base64Image })
                 });
-                if (!response.ok) throw new Error("Erreur serveur");
+                if (!response.ok) {
+                    if (response.status === 429) {
+                        document.getElementById('modal-premium').classList.remove('hidden');
+                        document.getElementById('modal-premium').classList.add('flex');
+                        throw new Error("Limite atteinte");
+                    }
+                    throw new Error("Erreur serveur");
+                }
                 const jsonResponse = await response.json();
                 if (this.lines.length === 1 && !this.lines[0].d) this.lines = [];
                 jsonResponse.forEach(r => this.lines.push({ d: r.d, q: r.q || 1, p: r.p || 0, tva: 0.2 }));
