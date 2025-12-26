@@ -810,17 +810,10 @@
                 <div>
                     <!-- SMART DICTATION BTN -->
                     <!-- AI TOOLS GRID -->
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <button onclick="editorManager.startSmartDictation()" id="btn-smart-mic"
-                            class="py-6 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-500/20 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] transition-transform group">
-                            <div
-                                class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-1 group-hover:bg-white/30 transition-colors">
-                                <i class="fa-solid fa-microphone text-2xl"></i>
-                            </div>
-                            <span class="font-bold text-sm">Dictée IA</span>
-                        </button>
+                    <!-- AI TOOLS GRID -->
+                    <div class="mb-6">
                         <button onclick="document.getElementById('input-ai-photo').click()"
-                            class="py-6 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/20 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] transition-transform group">
+                            class="w-full py-6 rounded-2xl bg-gradient-to-br from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/20 flex flex-col items-center justify-center gap-2 hover:scale-[1.02] transition-transform group">
                             <div
                                 class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mb-1 group-hover:bg-white/30 transition-colors">
                                 <i class="fa-solid fa-camera text-2xl"></i>
@@ -830,13 +823,6 @@
                         <input type="file" id="input-ai-photo" class="hidden" accept="image/*"
                             onchange="editorManager.analyzePhoto(this)">
                     </div>
-                    <div
-                        class="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-1 group-hover:bg-white/30 transition-colors">
-                        <i class="fa-solid fa-microphone text-3xl"></i>
-                    </div>
-                    <span class="font-black text-lg">Dictée Intelligente</span>
-                    <span class="text-xs text-brand-100 font-medium">"Pose de 3 prises et 1 tableau..."</span>
-                    </button>
 
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="font-bold text-sm uppercase text-slate-500">Prestations</h3><button
@@ -1385,4 +1371,5 @@
     <!-- LOGIC -->
     <script type="module" src="./app.js"></script>
 </body>
+
 </html>
