@@ -296,6 +296,14 @@ IMPORTANT : Réponds UNIQUEMENT au format JSON strict :
     marketPrices: { 'prise': 25, 'interrupteur': 20, 'peinture': 35, 'placo': 45 },
     async analyzePhoto(input) {
         if (input.files && input.files[0]) {
+            // CHECK QUOTA
+            const currentQuotes = parseInt(localStorage.getItem('pg_count_quotes') || '0');
+            if (!DataService.isPremium && currentQuotes >= 5) {
+                document.getElementById('modal-premium').classList.remove('hidden');
+                document.getElementById('modal-premium').classList.add('flex'); // Ensure flex is added as seen in other modal opens
+                return;
+            }
+
             const btn = input.previousElementSibling;
             const originalContent = btn.innerHTML;
             try {
