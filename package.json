@@ -1,0 +1,12 @@
+{
+    "name": "progest",
+    "version": "1.0.0",
+    "description": "L'outil des Artisans",
+    "type": "module",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+}
