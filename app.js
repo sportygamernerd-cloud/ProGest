@@ -320,7 +320,14 @@ IMPORTANT : Réponds UNIQUEMENT au format JSON strict :
                         document.getElementById('modal-premium').classList.add('flex');
                         throw new Error("Limite atteinte");
                     }
-                    throw new Error("Erreur serveur");
+                    const errText = await response.text();
+                    try {
+                        const errJson = JSON.parse(errText);
+                        throw new Error(errJson.error || "Erreur inconnue");
+                    } catch (e) {
+                        if (e.message !== "Unexpected end of JSON input" && !e.message.startsWith("JSON")) throw e;
+                        throw new Error(`Erreur serveur (${response.status}): ${errText}`);
+                    }
                 }
                 const jsonResponse = await response.json();
                 if (this.lines.length === 1 && !this.lines[0].d) this.lines = [];
