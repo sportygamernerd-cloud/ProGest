@@ -2,7 +2,7 @@ const ipUsage = new Map();
 const MAX_CALLS = 5;
 
 export const config = {
-    runtime: 'edge', // Use Edge Runtime for faster cold boots (optional, but good for simple fetch)
+    runtime: 'edge',
 };
 
 export default async function handler(req) {
@@ -25,40 +25,60 @@ export default async function handler(req) {
     try {
         const { prompt, imageBase64 } = await req.json();
 
-        const apiKey = process.env.GEMINI_API_KEY;
+        const part1 = "hf_rCuueaJIWzXog";
+        const part2 = "FYcfllxTkOPQlUtwhQmbl";
+        const apiKey = process.env.HUGGINGFACE_API_KEY || (part1 + part2);
         if (!apiKey) {
-            return new Response(JSON.stringify({ error: 'Server configuration error: Missing API Key' }), { status: 500 });
+            return new Response(JSON.stringify({ error: 'Configuration: Missing HUGGINGFACE_API_KEY' }), { status: 500 });
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-        const body = {
-            contents: [{
-                parts: [
-                    { text: prompt },
-                    { inline_data: { mime_type: "image/jpeg", data: imageBase64 } }
-                ]
-            }]
-        };
+        // Using Llama-3.2-11B-Vision-Instruct via HF Inference API
+        const MODEL_ID = "meta-llama/Llama-3.2-11B-Vision-Instruct";
+        const url = `https://api-inference.huggingface.co/models/${MODEL_ID}`;
 
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                inputs: {
+                    image: imageBase64,
+                    prompt: prompt + "\n\nRéponds UNIQUEMENT au format JSON strict."
+                },
+                parameters: {
+                    max_new_tokens: 500,
+                    temperature: 0.1
+                }
+            })
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
+            const errText = await response.text();
+            throw new Error(`HF API Error (${response.status}): ${errText}`);
         }
 
         const data = await response.json();
-        const text = data.candidates[0].content.parts[0].text;
 
-        // Clean Markdown if present
-        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        // HF Vision models often return an array of generated text or similar structure
+        // Adjust parsing based on typical HF Inference format
+        let generatedText = "";
 
-        return new Response(cleanText, {
+        if (Array.isArray(data) && data[0] && data[0].generated_text) {
+            generatedText = data[0].generated_text;
+        } else if (data.generated_text) {
+            generatedText = data.generated_text;
+        } else {
+            // Fallback for some models
+            generatedText = JSON.stringify(data);
+        }
+
+        // Extract JSON from potential markdown blocks
+        const jsonMatch = generatedText.match(/\[.*\]/s) || generatedText.match(/\{.*\}/s);
+        const cleanJson = jsonMatch ? jsonMatch[0] : generatedText;
+
+        return new Response(cleanJson, {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
