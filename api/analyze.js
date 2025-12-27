@@ -34,7 +34,7 @@ export default async function handler(req) {
 
         // Using Llama-3.2-11B-Vision-Instruct via HF Inference API
         const MODEL_ID = "meta-llama/Llama-3.2-11B-Vision-Instruct";
-        const url = `https://api-inference.huggingface.co/models/${MODEL_ID}`;
+        const url = `https://router.huggingface.co/models/${MODEL_ID}`;
 
         const response = await fetch(url, {
             method: 'POST',
