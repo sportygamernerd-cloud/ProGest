@@ -32,8 +32,8 @@ export default async function handler(req) {
             return new Response(JSON.stringify({ error: 'Configuration: Missing HUGGINGFACE_API_KEY' }), { status: 500 });
         }
 
-        // Using Qwen2-VL-7B-Instruct via HF Inference API
-        const MODEL_ID = "Qwen/Qwen2-VL-7B-Instruct";
+        // Using LLaVA-1.5-7b via HF Inference API
+        const MODEL_ID = "llava-hf/llava-1.5-7b-hf";
         const url = `https://router.huggingface.co/models/${MODEL_ID}`;
 
         const response = await fetch(url, {
