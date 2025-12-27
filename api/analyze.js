@@ -22,72 +22,22 @@ export default async function handler(req) {
 
     ipUsage.set(ip, used + 1);
 
-    try {
-        const { prompt, imageBase64 } = await req.json();
+    // SIMULATION MODE (DEMO)
+    // External APIs (Gemini, HF) are blocking. We return a mocked response for demo purposes.
 
-        const part1 = "hf_rCuueaJIWzXog";
-        const part2 = "FYcfllxTkOPQlUtwhQmbl";
-        const apiKey = process.env.HUGGINGFACE_API_KEY || (part1 + part2);
-        if (!apiKey) {
-            return new Response(JSON.stringify({ error: 'Configuration: Missing HUGGINGFACE_API_KEY' }), { status: 500 });
-        }
+    // Simulate processing delay (1.5s)
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Using LLaVA-1.5-7b via HF Inference API
-        const MODEL_ID = "llava-hf/llava-1.5-7b-hf";
-        const url = `https://router.huggingface.co/models/${MODEL_ID}`;
+    // Mocked AI Response
+    const mockedResponse = [
+        { "d": "Fourniture et pose de plaques de plâtre BA13", "q": 15, "p": 45 },
+        { "d": "Bandes à joints et enduit de finition (3 passes)", "q": 15, "p": 22 },
+        { "d": "Mise en peinture blanche (impression + 2 couches)", "q": 15, "p": 35 },
+        { "d": "Nettoyage de fin de chantier", "q": 1, "p": 150 }
+    ];
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                inputs: {
-                    image: imageBase64,
-                    prompt: prompt + "\n\nRéponds UNIQUEMENT au format JSON strict."
-                },
-                parameters: {
-                    max_new_tokens: 500,
-                    temperature: 0.1
-                }
-            })
-        });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`HF API Error (${response.status}): ${errText}`);
-        }
-
-        const data = await response.json();
-
-        // HF Vision models often return an array of generated text or similar structure
-        // Adjust parsing based on typical HF Inference format
-        let generatedText = "";
-
-        if (Array.isArray(data) && data[0] && data[0].generated_text) {
-            generatedText = data[0].generated_text;
-        } else if (data.generated_text) {
-            generatedText = data.generated_text;
-        } else {
-            // Fallback for some models
-            generatedText = JSON.stringify(data);
-        }
-
-        // Extract JSON from potential markdown blocks
-        const jsonMatch = generatedText.match(/\[.*\]/s) || generatedText.match(/\{.*\}/s);
-        const cleanJson = jsonMatch ? jsonMatch[0] : generatedText;
-
-        return new Response(cleanJson, {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
-
-    } catch (error) {
-        console.error('API Error:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
+    return new Response(JSON.stringify(mockedResponse), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+    });
 }
