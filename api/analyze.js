@@ -30,7 +30,7 @@ export default async function handler(req) {
             return new Response(JSON.stringify({ error: 'Server configuration error: Missing API Key' }), { status: 500 });
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
         const body = {
             contents: [{
