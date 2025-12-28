@@ -57,7 +57,7 @@ const DataService = {
     _getLocal(k) { return JSON.parse(localStorage.getItem('pg_' + k) || '[]'); },
     _saveLocal(k, v) { localStorage.setItem('pg_' + k, JSON.stringify(v)); },
     escapeHtml(text) {
-        if (!text) return text;
+        if (typeof text !== 'string') return text;
         return String(text)
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
